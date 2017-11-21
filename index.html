@@ -20,7 +20,6 @@
     <body>
         <form>
             <input type="text" name="path" placeholder="path"/>
-            <input type="text" name="verse" placeholder="verse"/>
             <textarea></textarea>
         </form>
 <pre>
@@ -99,15 +98,12 @@ var elements = {
     form:document.getElementsByTagName("form")[0],
     input:document.getElementsByTagName("input")[0],
     output:document.getElementsByTagName("textarea")[0],
-    source:document.getElementsByTagName("pre")[0],
-    verse:document.getElementsByClassName("verse")[0]
+    source:document.getElementsByTagName("pre")[0]
 };
 elements.source.parentNode.removeChild(elements.source);
 elements.form.addEventListener('submit', function(e)
 {
     e.preventDefault();
-    console.log("----------");
-    console.log(elements.input.value);
     elements.output.innerHTML = elements.source.innerHTML.split("{---}").join(elements.input.value);
 });
 </script>
