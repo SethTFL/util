@@ -1,0 +1,173 @@
+---
+---
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
+        <script src="resources/papaparse.min.js"></script>
+        <style>
+            dt
+            {
+                font-weight:bold;
+            }
+            dt::after
+            {
+                content:":";
+            }
+            dd
+            {
+                margin-left:0;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div ng-app="App" ng-controller="Controller">
+            <div class="input-group">
+                <span class="input-group-addon">Import:</span>
+                <input type="file" data-import-csv class="form-control">
+            </div>
+            <dl>
+                <dt>
+                    30049 / LeatherTouch
+                </dt>
+                <dd ng-bind="Parsed[0]"></dd>
+            </dl>
+            <dl>
+                <dt>
+                    30050 / Hardcover
+                </dt>
+                <dd ng-bind="Parsed[1]"></dd>
+            </dl>
+            <dl>
+                <dt>
+                    Total
+                </dt>
+                <dd ng-bind="(Parsed[0] + Parsed[1])"></dd>
+            </dl>
+        </div>
+
+        <script>
+var App;
+App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate){
+    //inInterpolate.startSymbol('{[{').endSymbol('}]}');
+}]);
+App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser){
+
+    var directive = {};
+
+    directive.link = function(inScope, inElement, inAttributes){
+
+        function handlerEnter(inEvent){
+            if(inEvent){
+                inEvent.preventDefault();
+            }
+            inElement.addClass("Import");
+            inEvent.dataTransfer.effectAllowed = 'copy';
+            return false;
+        }
+        
+        function handlerDrop(inEvent){
+            inElement.removeClass("Import");
+            if(inEvent){
+                inEvent.preventDefault();
+            }
+            parse(event.dataTransfer.files[0]);
+            return false;
+        }
+        
+        function handlerChange(inEvent){
+            inEvent.stopImmediatePropagation();
+            parse(inEvent.target.files[0]);
+        };
+        
+        function parse(inFile){
+            
+            var parser = new FileReader();
+            parser.onload = function(inEvent){
+                FactoryParser.Parse(inEvent.target.result);
+                inScope.$apply();
+            };
+            parser.readAsText(inFile);
+        }
+        
+        function handlerLeave(){
+            inElement.removeClass("Import");
+        }
+        
+        
+        
+        inElement.on("dragenter dragstart dragend dragleave dragover drag drop", function (inEvent) {inEvent.preventDefault();});
+        inElement.on('dragenter', handlerEnter);
+        inElement.on('dragleave', handlerLeave);
+        inElement.on('drop', handlerDrop);
+        inElement.on('change', handlerChange);
+        inElement.on('click', function(inEvent){
+            inEvent.stopImmediatePropagation();
+            
+        })
+    };
+    
+    return directive;
+    
+}]);
+App.factory("FactoryParser", [function()
+{
+    var obj = {};
+    obj.Fields = {
+        Code:[],
+        Quantity:[]
+    };
+    obj.Codes = ["30049", "30050"];
+    obj.Output = [0, 0];
+    obj.Parse = function(inData)
+    {
+        Papa.parse(inData, {
+            complete: function(results) {
+                var i, j, k;
+                var row;
+                var cell;
+                var match;
+                for(i=0; i<results.data[0].length; i++)
+                {
+                    
+                    cell = results.data[0][i];
+                    if(cell == "Product Code")
+                    {
+                        obj.Fields.Code.push(i);
+                    }
+                    if(cell == "Quantity")
+                    {
+                        obj.Fields.Quantity.push(i);
+                    }
+                }
+                console.log(obj.Fields);
+
+                for(i=1; i<results.data.length; i++)
+                {
+                    row = results.data[i];
+                    for(j=0; j<obj.Fields.Code.length; j++)
+                    {
+                        cell = row[obj.Fields.Code[j]];
+                        match = obj.Codes.indexOf(cell)
+                        if(match != -1)
+                        {
+                            obj.Output[match] += parseInt(row[obj.Fields.Quantity[j]]);
+                        }
+                    }
+                }
+
+                console.log(obj.Output);
+            }
+        });
+
+    };
+    return obj;
+}]);
+App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
+{
+    $scope.Parsed = FactoryParser.Output;
+}]);    
+        </script>
+    </body>
+</html>
