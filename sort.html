@@ -1,0 +1,207 @@
+---
+---
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="papaparse.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
+        <style>
+            input[data-import-csv]
+            {
+                padding:0.2rem;
+                background:#ddd;
+            }
+            dt
+            {
+                font-weight:bold;
+            }
+            dt::after
+            {
+                content:":";
+            }
+            dd
+            {
+                margin-left:0;
+            }
+        </style>
+    </head>
+    <body>
+        <div ng-app="App" ng-controller="Controller">
+            <div class="input-group">
+                <input type="file" data-import-csv class="form-control">
+            </div>
+            <table>
+                <tr ng-repeat="Row in Results track by $index">
+                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                </tr>
+            </table>
+        </div>
+
+        <script>
+var App;
+App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate){
+    inInterpolate.startSymbol('{[{').endSymbol('}]}');
+}]);
+App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser){
+
+    var directive = {};
+
+    directive.link = function(inScope, inElement, inAttributes){
+
+        function handlerEnter(inEvent){
+            if(inEvent){
+                inEvent.preventDefault();
+            }
+            inElement.addClass("Import");
+            inEvent.dataTransfer.effectAllowed = 'copy';
+            return false;
+        }
+        
+        function handlerDrop(inEvent){
+            inElement.removeClass("Import");
+            if(inEvent){
+                inEvent.preventDefault();
+            }
+            parse(event.dataTransfer.files[0]);
+            return false;
+        }
+        
+        function handlerChange(inEvent){
+            inEvent.stopImmediatePropagation();
+            parse(inEvent.target.files[0]);
+        };
+        
+        function parse(inFile){
+            FactoryParser.Parse(inFile);
+        }
+        
+        function handlerLeave(){
+            inElement.removeClass("Import");
+        }
+        
+        
+        
+        inElement.on("dragenter dragstart dragend dragleave dragover drag drop", function (inEvent) {inEvent.preventDefault();});
+        inElement.on('dragenter', handlerEnter);
+        inElement.on('dragleave', handlerLeave);
+        inElement.on('drop', handlerDrop);
+        inElement.on('change', handlerChange);
+        inElement.on('click', function(inEvent){
+            inEvent.stopImmediatePropagation();
+            
+        })
+    };
+    
+    return directive;
+    
+}]);
+App.factory("FactorySplitter", [function()
+{
+    return function(inID)
+    {
+        var i;
+        var char;
+        var check;
+        var partNum = "";
+        var partStr = "";
+        if(inID)
+        {
+            for(i=0; i<inID.length; i++)
+            {
+                char = inID[i];
+                check = isNaN(parseInt(char));
+                if(!check)
+                {
+                    partNum = partNum.concat(char);
+                }
+                else
+                {
+                    partStr = partStr.concat(char);
+                }
+            }
+        }
+        else
+        {
+            partStr = "NA";
+            partNum = "NA";
+        }
+        return[partStr, partNum];
+    };
+}]);
+App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
+{
+    var obj = {};
+    obj.Divider = "Quantity1";
+    obj.IDColumn = 1;
+    obj.Labels = ["Product", "Code"];
+    obj.Output = [];
+    obj.Handler = function(){};
+    obj.Parse = function(inData)
+    {
+        Papa.parse(inData, {
+            complete: function(results) {
+               
+                console.log(results);
+
+                var i;
+                var startPoint = 0;
+                var row;
+                var split;
+                for(i=0; i<results.data.length; i++)
+                {
+                    row = results.data[i];
+                    obj.Output.push(row);
+                    if(row[0] === obj.Divider)
+                    {
+                        startPoint = i+1;
+                        var headers = obj.Output[obj.Output.length-1];
+                        var newHeaders = headers.concat(obj.Labels);
+                        obj.Output[obj.Output.length-1] = newHeaders;
+                        break;
+                    }
+                }
+
+                for(i=startPoint; i<results.data.length-1; i++)
+                {
+                    row = results.data[i];
+                    split = FactorySplitter(row[obj.IDColumn]);
+                    obj.Output.push(row.concat(split));
+                }
+
+                obj.Handler(obj.Output);
+            }
+        });
+
+    };
+    return obj;
+}]);
+App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
+{
+    $scope.Parser = FactoryParser;
+    $scope.Results = [];
+    $scope.File = "";
+    $scope.Parser.Handler = function(inData)
+    {
+        $scope.Results = inData;
+        $scope.File = Papa.unparse(inData);
+        $scope.$apply();
+        download("Split.csv", $scope.File);
+    };
+}]);    
+        </script>
+        <script>
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+        </script>
+    </body>
+</html>
