@@ -30,24 +30,17 @@
             <div class="input-group">
                 <input type="file" data-import-csv class="form-control">
             </div>
-            <dl ng-repeat="Code in Parsed.Codes track by $index">
-                <dt>
-                    <span ng-bind="Code.ID"></span> / <span ng-bind="Code.Name"></span>
-                </dt>
-                <dd><span ng-bind="Code.Count"></span></dd>
-            </dl>
-            <dl>
-                <dt>
-                    <span>Total</span>
-                </dt>
-                <dd><span ng-bind="Parsed.Total"></span></dd>
-            </dl>
+            <table>
+                <tr ng-repeat="Row in Results track by $index">
+                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                </tr>
+            </table>
         </div>
 
         <script>
 var App;
 App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate){
-    //inInterpolate.startSymbol('{[{').endSymbol('}]}');
+    inInterpolate.startSymbol('{[{').endSymbol('}]}');
 }]);
 App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser){
 
@@ -79,7 +72,7 @@ App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, Factor
         };
         
         function parse(inFile){
-            FactoryParser.Parse(inFile, inScope.$apply);
+            FactoryParser.Parse(inFile);
         }
         
         function handlerLeave(){
@@ -102,105 +95,80 @@ App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, Factor
     return directive;
     
 }]);
-App.factory("FactoryParser", [function()
+App.factory("FactorySplitter", [function()
+{
+    return function(inID)
+    {
+        var i;
+        var char;
+        var check;
+        var partNum = "";
+        var partStr = "";
+        if(inID)
+        {
+            for(i=0; i<inID.length; i++)
+            {
+                char = inID[i];
+                check = isNaN(parseInt(char));
+                if(!check)
+                {
+                    partNum = partNum.concat(char);
+                }
+                else
+                {
+                    partStr = partStr.concat(char);
+                }
+            }
+        }
+        else
+        {
+            partStr = "NA";
+            partNum = "NA";
+        }
+        return[partStr, partNum];
+    };
+}]);
+App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 {
     var obj = {};
-    obj.Fields = {
-        Code:[],
-        Quantity:[]
-    };
-    obj.Codes = [{
-        ID:"30049",
-        Name:"LeatherTouch",
-        Count:0
-    },
-    {
-        ID:"30050",
-        Name:"Hardcover",
-        Count:0
-    },
-    {
-        ID:"30048",
-        Name:"Black Leather (non-indexed)",
-        Count:0
-    },
-    {
-        ID:"30047",
-        Name:"Black Leather (indexed)",
-        Count:0
-    }];
-    obj.Total = 0;
-
-    obj.Reset = function()
-    {
-        obj.Total = 0;
-        for(i=0; i<obj.Codes.length; i++)
-        {
-            obj.Codes[i].Count = 0;
-            obj.Codes[i].HasBeenSet = false;
-        } 
-    };
-    obj.Parse = function(inData, inHandlerDone)
+    obj.Divider = "Quantity1";
+    obj.IDColumn = 1;
+    obj.Labels = ["Product", "Code"];
+    obj.Output = [];
+    obj.Handler = function(){};
+    obj.Parse = function(inData)
     {
         Papa.parse(inData, {
             complete: function(results) {
-                var i, j, k;
+               
+                console.log(results);
+
+                var i;
+                var startPoint = 0;
                 var row;
-                var cell;
-                var match;
-                var count;
-                var code;
-
-                for(i=0; i<obj.Codes.length; i++)
-                {
-                    console.log("initial count:", obj.Codes[i]);
-                }
-
-                // go through the header and collect the code/qualtity column pairs
-                for(i=0; i<results.data[0].length; i++)
-                {
-                    cell = results.data[0][i];
-                    if(cell == "Product Code")
-                    {
-                        obj.Fields.Code.push(i);
-                    }
-                    if(cell == "Quantity")
-                    {
-                        obj.Fields.Quantity.push(i);
-                    }
-                }
-
-                // reset the counts (doesnt work for some reason)
-                obj.Reset();
-
-                console.log("Rows:", results.data.length);
-                for(i=1; i<results.data.length; i++)
+                var split;
+                for(i=0; i<results.data.length; i++)
                 {
                     row = results.data[i];
-
-                    //for each product code field in the row...
-                    for(j=0; j<obj.Fields.Code.length; j++)
+                    obj.Output.push(row);
+                    if(row[0] === obj.Divider)
                     {
-                        cell = row[obj.Fields.Code[j]];
-                        // see if it has a code we are looking for..
-                        for(k=0; k<obj.Codes.length; k++)
-                        {
-                            code = obj.Codes[k];
-                            // if it has one of the codes we want...
-                            if(code.ID == cell)
-                            {
-                                // tally up with the matchng quantity column
-                                count = parseInt(row[obj.Fields.Quantity[j]]);
-                                code.Count += count;
-                                obj.Total += count;
-                                code.HasBeenSet = true;
-                                break;
-                            }
-                        }
+                        startPoint = i+1;
+                        var headers = obj.Output[obj.Output.length-1];
+                        var newHeaders = headers.concat(obj.Labels);
+                        obj.Output[obj.Output.length-1] = newHeaders;
+                        break;
                     }
                 }
-                inHandlerDone();
 
+                for(i=startPoint; i<results.data.length-1; i++)
+                {
+                    row = results.data[i];
+                    split = FactorySplitter(row[obj.IDColumn]);
+                    obj.Output.push(row.concat(split));
+                }
+
+                obj.Handler(obj.Output);
             }
         });
 
@@ -209,8 +177,31 @@ App.factory("FactoryParser", [function()
 }]);
 App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
 {
-    $scope.Parsed = FactoryParser;
+    $scope.Parser = FactoryParser;
+    $scope.Results = [];
+    $scope.File = "";
+    $scope.Parser.Handler = function(inData)
+    {
+        $scope.Results = inData;
+        $scope.File = Papa.unparse(inData);
+        $scope.$apply();
+        download("Split.csv", $scope.File);
+    };
 }]);    
+        </script>
+        <script>
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
         </script>
     </body>
 </html>
