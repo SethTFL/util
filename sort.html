@@ -14,19 +14,34 @@
                 font-family:Arial;
                 font-size:12px;
             }
-            input[data-import-csv]
+            *[data-import-csv]
             {
                 display:block;
+                
                 padding:3rem;
-                margin:1rem;
-                background:#fff;
+                margin:1rem auto 1rem auto;
                 border:8px dashed #aaa;
+                
+                background:#fff;
                 border-radius:10px;
+                cursor:pointer;
+                
                 text-align:center;
             }
-            input[data-import-csv]:hover, input[data-import-csv].Import
+            *[data-import-csv]:hover, *[data-import-csv].Import
             {
                 border-color:#FA0;
+                background: #fdd48f;
+            }
+            table
+            {
+                width:80%;
+                margin:0 auto;
+            }
+            tr:hover
+            {
+                background:#ddd;
+            }
             }
         </style>
     </head>
