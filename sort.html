@@ -6,30 +6,33 @@
         <script src="papaparse.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
         <style>
+            *
+            {
+                margin:0;
+                padding:0;
+                color:#000;
+                font-family:Arial;
+                font-size:12px;
+            }
             input[data-import-csv]
             {
-                padding:0.2rem;
-                background:#ddd;
+                display:block;
+                padding:3rem;
+                margin:1rem;
+                background:#fff;
+                border:8px dashed #aaa;
+                border-radius:10px;
+                text-align:center;
             }
-            dt
+            input[data-import-csv]:hover, input[data-import-csv].Import
             {
-                font-weight:bold;
-            }
-            dt::after
-            {
-                content:":";
-            }
-            dd
-            {
-                margin-left:0;
+                border-color:#FA0;
             }
         </style>
     </head>
     <body>
         <div ng-app="App" ng-controller="Controller">
-            <div class="input-group">
-                <input type="file" data-import-csv class="form-control">
-            </div>
+            <input type="file" data-import-csv class="form-control" ng-hide="Results.length > 0">
             <table>
                 <tr ng-repeat="Row in Results track by $index">
                     <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
@@ -39,10 +42,12 @@
 
         <script>
 var App;
-App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate){
+App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate)
+{
     inInterpolate.startSymbol('{[{').endSymbol('}]}');
 }]);
-App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser){
+App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser)
+{
 
     var directive = {};
 
@@ -100,43 +105,35 @@ App.factory("FactorySplitter", [function()
     return function(inID)
     {
         var i;
-        var char;
-        var check;
-        var partNum = "";
-        var partStr = "";
+        var output = ["", inID];
         if(inID)
         {
             for(i=0; i<inID.length; i++)
             {
-                char = inID[i];
-                check = isNaN(parseInt(char));
-                if(!check)
+                if(isNaN(parseInt( inID[i] )))
                 {
-                    partNum = partNum.concat(char);
-                }
-                else
-                {
-                    partStr = partStr.concat(char);
+                    output[0] = inID.substring(i);
+                    output[1] = inID.substring(0, i);
+                    break;
                 }
             }
         }
-        else
-        {
-            partStr = "NA";
-            partNum = "NA";
-        }
-        return[partStr, partNum];
+        return output;
     };
 }]);
 App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 {
     var obj = {};
-    obj.Divider = "Quantity1";
-    obj.IDColumn = 1;
-    obj.Labels = ["Product", "Code"];
+    
+    obj.Code = "ProductCode";
+    obj.CodeSplit = ["Product", "Code"];
+    
+    obj.Flip = "MP3CD";
+    obj.FlipColumns = [1, 2]
     
     obj.Output = [];
     obj.OutputSort = [];
+    
     obj.Handler = function(){};
     obj.Parse = function(inData)
     {
@@ -146,35 +143,41 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         Papa.parse(inData, {
             complete: function(results) {
                 
-                var i;
+                var i, j;
                 var startPoint = 0;
+                var columnIndex = 1;
                 var row;
                 var split;
+                var headerSize = 3;
+                
+                outer:
                 for(i=0; i<results.data.length; i++)
                 {
                     row = results.data[i];
-                    obj.Output.push(row);
-                    if(row[0] === obj.Divider)
+                    for(j=0; j<row.length; j++)
                     {
-                        startPoint = i+1;
-                        var headers = obj.Output[obj.Output.length-1];
-                        var newHeaders = headers.concat(obj.Labels);
-                        obj.Output[obj.Output.length-1] = newHeaders;
-                        break;
+                        if(row[j] === obj.Code)
+                        {
+                            obj.Output.push(row);
+                            columnIndex = j;
+                            startPoint = i+1;
+                            headerSize = row.length;
+                            obj.Output[obj.Output.length-1] = row.concat(obj.CodeSplit);
+                            break outer;
+                        }
                     }
                 }
 
                 for(i=startPoint; i<results.data.length-1; i++)
                 {
                     row = results.data[i];
-                    split = FactorySplitter(row[obj.IDColumn]);
+                    split = FactorySplitter(row[columnIndex]);
                     obj.OutputSort.push(row.concat(split));
                 }
                 
-                
                 obj.OutputSort.sort(function(a, b)
                 {
-                    var x = a[3].toLowerCase(), y = b[3].toLowerCase();
+                    var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
                     if(x<y)
                     {
                         return -1;
@@ -183,11 +186,24 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                     {
                         return 1;
                     }
-                    return a[4] - b[4];
+                    return a[headerSize+1] - b[headerSize+1];
                 });
+                
+
+                for(i=0; i<obj.OutputSort.length; i++)
+                {
+                    row = obj.OutputSort[i];
+                    if(row[headerSize] == obj.Flip)
+                    {
+                        var a = obj.FlipColumns[0];
+                        var b = obj.FlipColumns[1]
+                        var temp = row[a];
+                        row[a] = row[b];
+                        row[b] = temp;
+                    }
+                }
 
                 obj.Output = obj.Output.concat(obj.OutputSort);
-
                 obj.Handler(obj.Output);
             }
         });
@@ -205,23 +221,21 @@ App.controller("Controller", ["$scope", "FactoryParser", function($scope, Factor
         $scope.Results = inData;
         $scope.File = Papa.unparse(inData);
         $scope.$apply();
-        download("Split.csv", $scope.File);
     };
 }]);    
         </script>
+        <!--
         <script>
 function download(filename, text) {
   var element = document.createElement('a');
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
   element.setAttribute('download', filename);
-
   element.style.display = 'none';
   document.body.appendChild(element);
-
   element.click();
-
   document.body.removeChild(element);
 }
         </script>
+        -->
     </body>
 </html>
