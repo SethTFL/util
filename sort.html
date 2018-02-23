@@ -134,15 +134,18 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     obj.Divider = "Quantity1";
     obj.IDColumn = 1;
     obj.Labels = ["Product", "Code"];
+    
     obj.Output = [];
+    obj.OutputSort = [];
     obj.Handler = function(){};
     obj.Parse = function(inData)
     {
+        obj.Output = [];
+        obj.OutputSort = [];
+        
         Papa.parse(inData, {
             complete: function(results) {
-               
-                console.log(results);
-
+                
                 var i;
                 var startPoint = 0;
                 var row;
@@ -165,8 +168,25 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 {
                     row = results.data[i];
                     split = FactorySplitter(row[obj.IDColumn]);
-                    obj.Output.push(row.concat(split));
+                    obj.OutputSort.push(row.concat(split));
                 }
+                
+                
+                obj.OutputSort.sort(function(a, b)
+                {
+                    var x = a[3].toLowerCase(), y = b[3].toLowerCase();
+                    if(x<y)
+                    {
+                        return -1;
+                    }
+                    if(x>y)
+                    {
+                        return 1;
+                    }
+                    return a[4] - b[4];
+                });
+
+                obj.Output = obj.Output.concat(obj.OutputSort);
 
                 obj.Handler(obj.Output);
             }
