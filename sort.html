@@ -159,7 +159,9 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     
     obj.Output = [];
     obj.OutputSort = [];
-    
+    obj.OutputMake = [];
+    obj.OutputShip = [];
+
     obj.Handler = function(){};
     obj.Parse = function(inData)
     {
@@ -178,6 +180,8 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         
         obj.Output = [];
         obj.OutputSort = [];
+        obj.OutputMake = [];
+        obj.OutputShip = [];
 
         var i, j;
         var startPoint = 0;
@@ -186,6 +190,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         var split;
         var headerSize = 3;
         
+        // find the header
         outer:
         for(i=0; i<results.data.length; i++)
         {
@@ -204,13 +209,20 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             }
         }
 
-        for(i=startPoint; i<results.data.length-1; i++)
+        // split ProductCode and add the parts in new columns
+        for(i=startPoint; i<results.data.length; i++)
         {
             row = results.data[i];
+            console.log("ROW LENGTH:", row.length);
+            if(row.length == 1 && row[0] == "")
+            {
+                continue;
+            }
             split = FactorySplitter(row[columnIndex]);
             obj.OutputSort.push(row.concat(split));
         }
         
+        // pivot on product and then code
         obj.OutputSort.sort(function(a, b)
         {
             var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
@@ -225,7 +237,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             return a[headerSize+1] - b[headerSize+1];
         });
         
-
+        // flip mp3cd code and decriptions
         for(i=0; i<obj.OutputSort.length; i++)
         {
             row = obj.OutputSort[i];
@@ -239,7 +251,46 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             }
         }
 
-        obj.Output = obj.Output.concat(obj.OutputSort);
+        // extract 4-digit CDs, all DVDs, and all MP3CDs
+        for(i=0; i<obj.OutputSort.length; i++)
+        {
+            var row = obj.OutputSort[i];
+            var cut;
+            var extractable = false;
+            var type = row[headerSize];
+            var id = row[headerSize+1]
+            switch(type)
+            {
+                case "CD" :
+                    if(id.length == 4)
+                    {
+                        extractable = true;
+                    }
+                    break;
+                case "DVD" :
+                    extractable = true;
+                    break;
+                case "MP3CD" :
+                    extractable = true;
+                    break;
+            }
+
+            if(extractable)
+            {
+                obj.OutputMake.push(row);
+                console.log("EXTRACTED:", type, id);
+            }
+            else
+            {
+                obj.OutputShip.push(row);
+                console.log("INTACT:", type, id);
+            }
+        }
+
+        // stitch head, output ship, and output make back together
+        obj.Output = obj.Output.concat(obj.OutputShip);
+        obj.Output.push(["-----"]);
+        obj.Output = obj.Output.concat(obj.OutputMake);
     };
 
     return obj;
