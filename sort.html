@@ -164,12 +164,23 @@ App.factory("FactorySplitter", [function()
         var output = ["", inID];
         if(inID)
         {
-            // remove gs prefix if its there
+            
             if(inID.length > 1)
             {
+                // remove gs prefix if its there
                 if(inID.substring(0, 2).toUpperCase() == "GS")
                 {
-                    inID = inID.substring(2)
+                    inID = inID.substring(2);
+                }
+
+                //check for binders (Y) and envelopes (PI)
+                if(inID[0].toUpperCase() == "Y")
+                {
+                    return ["Y", inID.substring(1)];
+                }
+                if(inID.substring(0, 2).toUpperCase() == "PI")
+                {
+                    return ["PI", inID.substring(2)];
                 }
             }
 
@@ -183,6 +194,16 @@ App.factory("FactorySplitter", [function()
                 }
             }
         }
+
+        //check for books and study books
+        if(output[0] == "")
+        {
+            output[0] = "BOOK";
+        }
+        if(output[0].toUpperCase() == "S")
+        {
+            output[0] = "BOOKST";
+        }
         return output;
     };
 }]);
@@ -194,8 +215,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     obj.CodeSplit = ["Product", "Code"];
     
     obj.Flip = "MP3CD";
-    obj.FlipColumns = [1, 2]
-
+    obj.FlipColumns = [1, 2];
 
     obj.Handler = function(){};
     obj.Parse = function(inData)
@@ -214,9 +234,10 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     obj.Sort = function(results) {
         
         obj.OutputHead = [];
-        obj.OutputSort = [];
+        obj.OutputData = [];
         obj.OutputMake = [];
         obj.OutputShip = [];
+        obj.OutputMisc = [];
 
         var i, j;
         var startPoint = 0;
@@ -254,34 +275,133 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             }
             
             split = FactorySplitter(row[columnIndex]);
-
-            
             var newRow = row.concat(split);
-            // add book and study types
-            if(newRow[headerSize] == "")
-            {
-                newRow[headerSize] = "BOOK";
-            }
-            if(newRow[headerSize] == "S")
-            {
-                newRow[headerSize] = "BOOKSTUDY";
-            }
+
+            // expand volumes
             // flip mp3cd code and decriptions
             if(newRow[headerSize] == obj.Flip)
             {
-                var a = obj.FlipColumns[0];
-                var b = obj.FlipColumns[1]
-                var temp = newRow[a];
-                newRow[a] = newRow[b];
-                newRow[b] = temp;
-            }
-            obj.OutputSort.push(newRow);
-        }
-        
-        // pivot on product and then code
-        obj.OutputSort.sort(function(a, b)
-        {
+                var words = newRow[2].split(" ");
+                var wordNumber;
+                var seriesName;
+                var setSize;
+                var j, k;
+                if(words.length > 3)
+                {
+                    if(words[words.length-1].toUpperCase() == "SET" && words[words.length-2].toUpperCase() == "VOLUME")
+                    {
+                        seriesName = words.slice(0, words.length-3).join(" ");
+                        wordNumber = words[words.length-3].toUpperCase();
+                        switch(wordNumber)
+                        {
+                            case "TWO" :
+                                setSize = 2;
+                                break;
+                            case "THREE" :
+                                setSize = 3;
+                                break;
+                            case "FOUR" :
+                                setSize = 4;
+                                break;
+                            case "FIVE" :
+                                setSize = 5;
+                                break;
+                            case "SIX" :
+                                setSize = 6;
+                                break;
+                            case "SEVEN" :
+                                setSize = 7;
+                                break;
+                            case "EIGHT" :
+                                setSize = 8;
+                                break;
+                            case "NINE" :
+                                setSize = 9;
+                                break;
+                            case "TEN" :
+                                setSize = 10;
+                                break;
+                        }
 
+                        var countDown = parseInt(newRow[headerSize+1]);
+                        var copy;
+                        for(j=0; j<setSize; j++)
+                        {
+                            copy = [];
+                            for(k=0; k<newRow.length; k++)
+                            {
+                                copy[k] = newRow[k];
+                            }
+                            copy[headerSize+1] = countDown-j-1; // code
+                            copy[1] = copy[headerSize+1] + copy[headerSize]; // productcode
+                            copy[2] = seriesName + " - Volume " + (j+1);
+
+                            var temp = copy[obj.FlipColumns[0]];
+                            copy[obj.FlipColumns[0]] = copy[obj.FlipColumns[1]];
+                            copy[obj.FlipColumns[1]] = temp;
+                            obj.OutputData.push(copy);
+                        }
+
+                        continue;
+                    }
+                }
+
+                var temp = newRow[obj.FlipColumns[0]];
+                newRow[obj.FlipColumns[0]] = newRow[obj.FlipColumns[1]];
+                newRow[obj.FlipColumns[1]] = temp;
+            }
+            obj.OutputData.push(newRow);
+        }
+
+        // split into three lists...
+        // extract 4-digit CDs, all DVDs, and all MP3CDs
+        // then remove product and code columns
+        for(i=0; i<obj.OutputData.length; i++)
+        {
+            var row = obj.OutputData[i];
+            var cut;
+            var list = obj.OutputShip;
+            var type = row[headerSize].toUpperCase();
+            var id = row[headerSize+1]
+            switch(type)
+            {
+                case "CD" :
+                    if(id.length == 4)
+                    {
+                        list = obj.OutputMake;
+                    }
+                    break;
+                case "DVD" :
+                    if(id.length == 4)
+                    {
+                        list = obj.OutputMake;
+                    }
+                    break;
+                case "MP3CD" :
+                    list = obj.OutputMake;
+                    break;
+                case "MCD" :
+                    list = obj.OutputMake;
+                    break;
+
+                case "PI" :
+                    list = obj.OutputMisc;
+                    break;
+                case "SHIPADJ" :
+                    list = obj.OutputMisc;
+                    break;
+                case "Y" :
+                    list = obj.OutputMisc;
+                    break;
+            }
+
+            //row.splice(row.length-2);
+            list.push(row);
+        }
+
+        // pivot  make on product and then code
+        obj.OutputMake.sort(function(a, b)
+        {
             var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
             if(x<y)
             {
@@ -293,50 +413,48 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             }
             return a[headerSize+1] - b[headerSize+1];
         });
-        
 
-        // extract 4-digit CDs, all DVDs, and all MP3CDs
-        // then remove product and code columns
-        for(i=0; i<obj.OutputSort.length; i++)
+        // pivot ship (volunteer) on type then description
+        obj.OutputShip.sort(function(a, b)
         {
-            var row = obj.OutputSort[i];
-            var cut;
-            var makable = false;
-            var type = row[headerSize].toUpperCase();
-            var id = row[headerSize+1]
-            switch(type)
+            var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
+            if(x<y)
             {
-                case "CD" :
-                    if(id.length == 4)
-                    {
-                        makable = true;
-                    }
-                    break;
-                case "DVD" :
-                    if(id.length == 4)
-                    {
-                        makable = true;
-                    }
-                    break;
-                case "MP3CD" :
-                    makable = true;
-                    break;
-                case "MCD" :
-                    makable = true;
-                    break;
+                return -1;
+            }
+            if(x>y)
+            {
+                return 1;
             }
 
-            row.splice(row.length-2);
+            var x = a[2].toLowerCase(), y = b[2].toLowerCase();
+            if(x<y)
+            {
+                return -1;
+            }
+            if(x>y)
+            {
+                return 1;
+            }
+        });
 
-            if(makable)
+        // pivot misc
+        obj.OutputMisc.sort(function(a, b)
+        {
+            var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
+            if(x<y)
             {
-                obj.OutputMake.push(row);
+                return -1;
             }
-            else
+            if(x>y)
             {
-                obj.OutputShip.push(row);
+                return 1;
             }
-        }
+            return a[headerSize+1] - b[headerSize+1];
+        });
+
+        // stich OutputMisc back onto output Ship
+        obj.OutputShip = obj.OutputShip.concat(obj.OutputMisc);
 
     };
 
