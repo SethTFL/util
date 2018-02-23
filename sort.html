@@ -281,11 +281,74 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             // flip mp3cd code and decriptions
             if(newRow[headerSize] == obj.Flip)
             {
-                var a = obj.FlipColumns[0];
-                var b = obj.FlipColumns[1]
-                var temp = newRow[a];
-                newRow[a] = newRow[b];
-                newRow[b] = temp;
+                var words = newRow[2].split(" ");
+                var wordNumber;
+                var seriesName;
+                var setSize;
+                var j, k;
+                if(words.length > 3)
+                {
+                    if(words[words.length-1].toUpperCase() == "SET" && words[words.length-2].toUpperCase() == "VOLUME")
+                    {
+                        seriesName = words.slice(0, words.length-3).join(" ");
+                        wordNumber = words[words.length-3].toUpperCase();
+                        switch(wordNumber)
+                        {
+                            case "TWO" :
+                                setSize = 2;
+                                break;
+                            case "THREE" :
+                                setSize = 3;
+                                break;
+                            case "FOUR" :
+                                setSize = 4;
+                                break;
+                            case "FIVE" :
+                                setSize = 5;
+                                break;
+                            case "SIX" :
+                                setSize = 6;
+                                break;
+                            case "SEVEN" :
+                                setSize = 7;
+                                break;
+                            case "EIGHT" :
+                                setSize = 8;
+                                break;
+                            case "NINE" :
+                                setSize = 9;
+                                break;
+                            case "TEN" :
+                                setSize = 10;
+                                break;
+                        }
+
+                        var countDown = parseInt(newRow[headerSize+1]);
+                        var copy;
+                        for(j=0; j<setSize; j++)
+                        {
+                            copy = [];
+                            for(k=0; k<newRow.length; k++)
+                            {
+                                copy[k] = newRow[k];
+                            }
+                            copy[headerSize+1] = countDown-j-1; // code
+                            copy[1] = copy[headerSize+1] + copy[headerSize]; // productcode
+                            copy[2] = seriesName + " - Volume " + (j+1);
+
+                            var temp = copy[obj.FlipColumns[0]];
+                            copy[obj.FlipColumns[0]] = copy[obj.FlipColumns[1]];
+                            copy[obj.FlipColumns[1]] = temp;
+                            obj.OutputData.push(copy);
+                        }
+
+                        continue;
+                    }
+                }
+
+                var temp = newRow[obj.FlipColumns[0]];
+                newRow[obj.FlipColumns[0]] = newRow[obj.FlipColumns[1]];
+                newRow[obj.FlipColumns[1]] = temp;
             }
             obj.OutputData.push(newRow);
         }
