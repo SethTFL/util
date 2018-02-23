@@ -52,11 +52,11 @@
             {
                 padding:0.15em;
             }
-            td.Ship
+            .Ship td
             {
                 border-bottom:1px solid #ccc;
             }
-            td.Make
+            .Make td
             {
                 border-bottom:1px dashed #999;
             }
@@ -77,18 +77,20 @@
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
 
-            <table cellpadding="0" cellspacing="0">
+            <table class="Ship" cellpadding="0" cellspacing="0">
                 <tr ng-repeat="Row in Parser.OutputHead track by $index">
                     <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
                 </tr>
                 <tr ng-repeat="Row in Parser.OutputShip track by $index">
-                    <td class="Ship" ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
                 </tr>
+            </table>
+            <table class="Make" style="page-break-before:always;" cellpadding="0" cellspacing="0">
                 <tr ng-repeat="Row in Parser.OutputHead track by $index">
                     <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
                 </tr>
                 <tr ng-repeat="Row in Parser.OutputMake track by $index">
-                    <td class="Make" ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
                 </tr>
             </table>
 
