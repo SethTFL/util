@@ -14,12 +14,18 @@
                 font-family:Arial;
                 font-size:12px;
             }
-            *[data-import-csv]
+            form
+            {
+                width:500px;
+                margin:0 auto;
+            }
+            *[data-import-csv], textarea
             {
                 display:block;
-                
-                padding:3rem;
-                margin:1rem auto 1rem auto;
+                width:100%;
+
+                padding:1rem;
+                margin:1rem;
                 border:8px dashed #aaa;
                 
                 background:#fff;
@@ -28,7 +34,7 @@
                 
                 text-align:center;
             }
-            *[data-import-csv]:hover, *[data-import-csv].Import
+            *[data-import-csv]:hover, *[data-import-csv].Import, textarea:hover
             {
                 border-color:#FA0;
                 background: #fdd48f;
@@ -47,7 +53,12 @@
     </head>
     <body>
         <div ng-app="App" ng-controller="Controller">
-            <input type="file" data-import-csv class="form-control" ng-hide="Results.length > 0">
+            <form ng-hide="Results.length > 0" ng-submit="Convert();">
+                <label>Upload/drag-and-drop CSV:</label>
+                <input type="file" data-import-csv class="form-control">
+                <label>Pase from Excel:</label>
+                <textarea ng-model="Paste" ng-change="Convert();"></textarea>
+            </form>
             <table>
                 <tr ng-repeat="Row in Results track by $index">
                     <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
@@ -152,90 +163,102 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     obj.Handler = function(){};
     obj.Parse = function(inData)
     {
-        obj.Output = [];
-        obj.OutputSort = [];
         
         Papa.parse(inData, {
-            complete: function(results) {
-                
-                var i, j;
-                var startPoint = 0;
-                var columnIndex = 1;
-                var row;
-                var split;
-                var headerSize = 3;
-                
-                outer:
-                for(i=0; i<results.data.length; i++)
-                {
-                    row = results.data[i];
-                    for(j=0; j<row.length; j++)
-                    {
-                        if(row[j] === obj.Code)
-                        {
-                            obj.Output.push(row);
-                            columnIndex = j;
-                            startPoint = i+1;
-                            headerSize = row.length;
-                            obj.Output[obj.Output.length-1] = row.concat(obj.CodeSplit);
-                            break outer;
-                        }
-                    }
-                }
-
-                for(i=startPoint; i<results.data.length-1; i++)
-                {
-                    row = results.data[i];
-                    split = FactorySplitter(row[columnIndex]);
-                    obj.OutputSort.push(row.concat(split));
-                }
-                
-                obj.OutputSort.sort(function(a, b)
-                {
-                    var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
-                    if(x<y)
-                    {
-                        return -1;
-                    }
-                    if(x>y)
-                    {
-                        return 1;
-                    }
-                    return a[headerSize+1] - b[headerSize+1];
-                });
-                
-
-                for(i=0; i<obj.OutputSort.length; i++)
-                {
-                    row = obj.OutputSort[i];
-                    if(row[headerSize] == obj.Flip)
-                    {
-                        var a = obj.FlipColumns[0];
-                        var b = obj.FlipColumns[1]
-                        var temp = row[a];
-                        row[a] = row[b];
-                        row[b] = temp;
-                    }
-                }
-
-                obj.Output = obj.Output.concat(obj.OutputSort);
+            complete: function(results)
+            {
+                obj.Sort(results);
                 obj.Handler(obj.Output);
             }
         });
 
     };
+
+    obj.Sort = function(results) {
+        
+        obj.Output = [];
+        obj.OutputSort = [];
+
+        var i, j;
+        var startPoint = 0;
+        var columnIndex = 1;
+        var row;
+        var split;
+        var headerSize = 3;
+        
+        outer:
+        for(i=0; i<results.data.length; i++)
+        {
+            row = results.data[i];
+            for(j=0; j<row.length; j++)
+            {
+                if(row[j] === obj.Code)
+                {
+                    obj.Output.push(row);
+                    columnIndex = j;
+                    startPoint = i+1;
+                    headerSize = row.length;
+                    obj.Output[obj.Output.length-1] = row.concat(obj.CodeSplit);
+                    break outer;
+                }
+            }
+        }
+
+        for(i=startPoint; i<results.data.length-1; i++)
+        {
+            row = results.data[i];
+            split = FactorySplitter(row[columnIndex]);
+            obj.OutputSort.push(row.concat(split));
+        }
+        
+        obj.OutputSort.sort(function(a, b)
+        {
+            var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
+            if(x<y)
+            {
+                return -1;
+            }
+            if(x>y)
+            {
+                return 1;
+            }
+            return a[headerSize+1] - b[headerSize+1];
+        });
+        
+
+        for(i=0; i<obj.OutputSort.length; i++)
+        {
+            row = obj.OutputSort[i];
+            if(row[headerSize] == obj.Flip)
+            {
+                var a = obj.FlipColumns[0];
+                var b = obj.FlipColumns[1]
+                var temp = row[a];
+                row[a] = row[b];
+                row[b] = temp;
+            }
+        }
+
+        obj.Output = obj.Output.concat(obj.OutputSort);
+    };
+
     return obj;
 }]);
 App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
 {
     $scope.Parser = FactoryParser;
     $scope.Results = [];
-    $scope.File = "";
+    $scope.Paste = "";
     $scope.Parser.Handler = function(inData)
     {
         $scope.Results = inData;
-        $scope.File = Papa.unparse(inData);
         $scope.$apply();
+    };
+    $scope.Convert = function()
+    {
+        $scope.Parser.Sort(Papa.parse($scope.Paste));
+        $scope.Results = $scope.Parser.Output;
+        console.log($scope.Results);
     };
 }]);    
         </script>
