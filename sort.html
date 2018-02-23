@@ -48,6 +48,10 @@
             {
                 background:#ddd;
             }
+            td
+            {
+                padding:0.15em;
+                border-bottom:1px solid #ddd;
             }
         </style>
     </head>
@@ -59,7 +63,7 @@
                 <label>Pase from Excel:</label>
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
-            <table>
+            <table cellpadding="0" cellspacing="0">
                 <tr ng-repeat="Row in Results track by $index">
                     <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
                 </tr>
@@ -134,6 +138,15 @@ App.factory("FactorySplitter", [function()
         var output = ["", inID];
         if(inID)
         {
+            // remove gs prefix if its there
+            if(inID.length > 1)
+            {
+                if(inID.substring(0, 2).toUpperCase() == "GS")
+                {
+                    inID = inID.substring(2)
+                }
+            }
+
             for(i=0; i<inID.length; i++)
             {
                 if(isNaN(parseInt( inID[i] )))
@@ -156,11 +169,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     
     obj.Flip = "MP3CD";
     obj.FlipColumns = [1, 2]
-    
-    obj.Output = [];
-    obj.OutputSort = [];
-    obj.OutputMake = [];
-    obj.OutputShip = [];
+
 
     obj.Handler = function(){};
     obj.Parse = function(inData)
@@ -178,7 +187,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 
     obj.Sort = function(results) {
         
-        obj.Output = [];
+        obj.OutputHeader = [];
         obj.OutputSort = [];
         obj.OutputMake = [];
         obj.OutputShip = [];
@@ -199,11 +208,11 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             {
                 if(row[j] === obj.Code)
                 {
-                    obj.Output.push(row);
+                    obj.OutputHeader.push(row);
                     columnIndex = j;
                     startPoint = i+1;
                     headerSize = row.length;
-                    obj.Output[obj.Output.length-1] = row.concat(obj.CodeSplit);
+                    //obj.Output[obj.Output.length-1] = row.concat(obj.CodeSplit);
                     break outer;
                 }
             }
@@ -240,9 +249,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 newRow[a] = newRow[b];
                 newRow[b] = temp;
             }
-
             obj.OutputSort.push(newRow);
-            
         }
         
         // pivot on product and then code
@@ -262,11 +269,12 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         
 
         // extract 4-digit CDs, all DVDs, and all MP3CDs
+        // then remove product and code columns
         for(i=0; i<obj.OutputSort.length; i++)
         {
             var row = obj.OutputSort[i];
             var cut;
-            var extractable = false;
+            var makable = false;
             var type = row[headerSize];
             var id = row[headerSize+1]
             switch(type)
@@ -274,18 +282,26 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 case "CD" :
                     if(id.length == 4)
                     {
-                        extractable = true;
+                        makable = true;
                     }
                     break;
                 case "DVD" :
-                    extractable = true;
+                    if(id.length == 4)
+                    {
+                        makable = true;
+                    }
                     break;
                 case "MP3CD" :
-                    extractable = true;
+                    makable = true;
+                    break;
+                case "MCD" :
+                    makable = true;
                     break;
             }
 
-            if(extractable)
+            row.splice(row.length-2);
+
+            if(makable)
             {
                 obj.OutputMake.push(row);
                 console.log("EXTRACTED:", type, id);
