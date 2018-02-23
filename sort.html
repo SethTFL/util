@@ -164,12 +164,23 @@ App.factory("FactorySplitter", [function()
         var output = ["", inID];
         if(inID)
         {
-            // remove gs prefix if its there
+            
             if(inID.length > 1)
             {
+                // remove gs prefix if its there
                 if(inID.substring(0, 2).toUpperCase() == "GS")
                 {
-                    inID = inID.substring(2)
+                    inID = inID.substring(2);
+                }
+
+                //check for binders (Y) and envelopes (PI)
+                if(inID[0].toUpperCase() == "Y")
+                {
+                    return ["Y", inID.substring(1)];
+                }
+                if(inID.substring(0, 2).toUpperCase() == "PI")
+                {
+                    return ["PI", inID.substring(2)];
                 }
             }
 
@@ -183,6 +194,16 @@ App.factory("FactorySplitter", [function()
                 }
             }
         }
+
+        //check for books and study books
+        if(output[0] == "")
+        {
+            output[0] = "BOOK";
+        }
+        if(output[0].toUpperCase() == "S")
+        {
+            output[0] = "BOOKST";
+        }
         return output;
     };
 }]);
@@ -194,8 +215,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     obj.CodeSplit = ["Product", "Code"];
     
     obj.Flip = "MP3CD";
-    obj.FlipColumns = [1, 2]
-
+    obj.FlipColumns = [1, 2];
 
     obj.Handler = function(){};
     obj.Parse = function(inData)
@@ -214,7 +234,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     obj.Sort = function(results) {
         
         obj.OutputHead = [];
-        obj.OutputSort = [];
+        obj.OutputData = [];
         obj.OutputMake = [];
         obj.OutputShip = [];
 
@@ -254,18 +274,8 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             }
             
             split = FactorySplitter(row[columnIndex]);
-
-            
             var newRow = row.concat(split);
-            // add book and study types
-            if(newRow[headerSize] == "")
-            {
-                newRow[headerSize] = "BOOK";
-            }
-            if(newRow[headerSize] == "S")
-            {
-                newRow[headerSize] = "BOOKSTUDY";
-            }
+
             // flip mp3cd code and decriptions
             if(newRow[headerSize] == obj.Flip)
             {
@@ -275,13 +285,12 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 newRow[a] = newRow[b];
                 newRow[b] = temp;
             }
-            obj.OutputSort.push(newRow);
+            obj.OutputData.push(newRow);
         }
         
         // pivot on product and then code
-        obj.OutputSort.sort(function(a, b)
+        obj.OutputData.sort(function(a, b)
         {
-
             var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
             if(x<y)
             {
@@ -297,9 +306,9 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 
         // extract 4-digit CDs, all DVDs, and all MP3CDs
         // then remove product and code columns
-        for(i=0; i<obj.OutputSort.length; i++)
+        for(i=0; i<obj.OutputData.length; i++)
         {
-            var row = obj.OutputSort[i];
+            var row = obj.OutputData[i];
             var cut;
             var makable = false;
             var type = row[headerSize].toUpperCase();
@@ -326,7 +335,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                     break;
             }
 
-            row.splice(row.length-2);
+            //row.splice(row.length-2);
 
             if(makable)
             {
