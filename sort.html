@@ -51,23 +51,47 @@
             td
             {
                 padding:0.15em;
-                border-bottom:1px solid #ddd;
+            }
+            td.Ship
+            {
+                border-bottom:1px solid #ccc;
+            }
+            td.Make
+            {
+                border-bottom:1px dashed #999;
+            }
+            th
+            {
+                text-align:left;
+                padding-top:10px;
+                padding-bottom:5px;
             }
         </style>
     </head>
     <body>
         <div ng-app="App" ng-controller="Controller">
-            <form ng-hide="Results.length > 0" ng-submit="Convert();">
+            <form ng-hide="(Parser.OutputShip.length + Parser.OutputMake.length) > 0" ng-submit="Convert();">
                 <label>Upload/drag-and-drop CSV:</label>
                 <input type="file" data-import-csv class="form-control">
                 <label>Pase from Excel:</label>
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
+
             <table cellpadding="0" cellspacing="0">
-                <tr ng-repeat="Row in Results track by $index">
-                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                <tr ng-repeat="Row in Parser.OutputHead track by $index">
+                    <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
+                </tr>
+                <tr ng-repeat="Row in Parser.OutputShip track by $index">
+                    <td class="Ship" ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                </tr>
+                <tr ng-repeat="Row in Parser.OutputHead track by $index">
+                    <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
+                </tr>
+                <tr ng-repeat="Row in Parser.OutputMake track by $index">
+                    <td class="Make" ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
                 </tr>
             </table>
+
         </div>
 
         <script>
@@ -164,7 +188,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 {
     var obj = {};
     
-    obj.Code = "ProductCode";
+    obj.Code = "PRODUCTCODE";
     obj.CodeSplit = ["Product", "Code"];
     
     obj.Flip = "MP3CD";
@@ -187,7 +211,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 
     obj.Sort = function(results) {
         
-        obj.OutputHeader = [];
+        obj.OutputHead = [];
         obj.OutputSort = [];
         obj.OutputMake = [];
         obj.OutputShip = [];
@@ -206,9 +230,9 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             row = results.data[i];
             for(j=0; j<row.length; j++)
             {
-                if(row[j] === obj.Code)
+                if(row[j].toUpperCase() === obj.Code)
                 {
-                    obj.OutputHeader.push(row);
+                    obj.OutputHead.push(row);
                     columnIndex = j;
                     startPoint = i+1;
                     headerSize = row.length;
@@ -255,6 +279,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         // pivot on product and then code
         obj.OutputSort.sort(function(a, b)
         {
+
             var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
             if(x<y)
             {
@@ -275,7 +300,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             var row = obj.OutputSort[i];
             var cut;
             var makable = false;
-            var type = row[headerSize];
+            var type = row[headerSize].toUpperCase();
             var id = row[headerSize+1]
             switch(type)
             {
@@ -304,19 +329,13 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             if(makable)
             {
                 obj.OutputMake.push(row);
-                console.log("EXTRACTED:", type, id);
             }
             else
             {
                 obj.OutputShip.push(row);
-                console.log("INTACT:", type, id);
             }
         }
 
-        // stitch head, output ship, and output make back together
-        obj.Output = obj.Output.concat(obj.OutputShip);
-        obj.Output.push(["-----"]);
-        obj.Output = obj.Output.concat(obj.OutputMake);
     };
 
     return obj;
@@ -324,18 +343,14 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
 {
     $scope.Parser = FactoryParser;
-    $scope.Results = [];
     $scope.Paste = "";
     $scope.Parser.Handler = function(inData)
     {
-        $scope.Results = inData;
         $scope.$apply();
     };
     $scope.Convert = function()
     {
         $scope.Parser.Sort(Papa.parse($scope.Paste));
-        $scope.Results = $scope.Parser.Output;
-        console.log($scope.Results);
     };
 }]);    
         </script>
