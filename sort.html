@@ -213,13 +213,36 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         for(i=startPoint; i<results.data.length; i++)
         {
             row = results.data[i];
-            console.log("ROW LENGTH:", row.length);
             if(row.length == 1 && row[0] == "")
             {
                 continue;
             }
+            
             split = FactorySplitter(row[columnIndex]);
-            obj.OutputSort.push(row.concat(split));
+
+            
+            var newRow = row.concat(split);
+            // add book and study types
+            if(newRow[headerSize] == "")
+            {
+                newRow[headerSize] = "BOOK";
+            }
+            if(newRow[headerSize] == "S")
+            {
+                newRow[headerSize] = "BOOKSTUDY";
+            }
+            // flip mp3cd code and decriptions
+            if(newRow[headerSize] == obj.Flip)
+            {
+                var a = obj.FlipColumns[0];
+                var b = obj.FlipColumns[1]
+                var temp = newRow[a];
+                newRow[a] = newRow[b];
+                newRow[b] = temp;
+            }
+
+            obj.OutputSort.push(newRow);
+            
         }
         
         // pivot on product and then code
@@ -237,19 +260,6 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             return a[headerSize+1] - b[headerSize+1];
         });
         
-        // flip mp3cd code and decriptions
-        for(i=0; i<obj.OutputSort.length; i++)
-        {
-            row = obj.OutputSort[i];
-            if(row[headerSize] == obj.Flip)
-            {
-                var a = obj.FlipColumns[0];
-                var b = obj.FlipColumns[1]
-                var temp = row[a];
-                row[a] = row[b];
-                row[b] = temp;
-            }
-        }
 
         // extract 4-digit CDs, all DVDs, and all MP3CDs
         for(i=0; i<obj.OutputSort.length; i++)
