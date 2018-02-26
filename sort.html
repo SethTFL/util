@@ -167,13 +167,13 @@ App.factory("FactorySplitter", [function()
             
             if(inID.length > 1)
             {
-                // remove gs prefix if its there
+                // move gs prefix to the end if its there
                 if(inID.substring(0, 2).toUpperCase() == "GS")
                 {
-                    inID = inID.substring(2);
+                    inID = inID.substring(2) + "GS";
                 }
 
-                //check for binders (Y) and envelopes (PI)
+                //check for binders (Y prefix) and envelopes (PI prefix)
                 if(inID[0].toUpperCase() == "Y")
                 {
                     return ["Y", inID.substring(1)];
@@ -196,13 +196,9 @@ App.factory("FactorySplitter", [function()
         }
 
         //check for books and study books
-        if(output[0] == "")
+        if(output[0] == "" || output[0].toUpperCase() == "S")
         {
             output[0] = "BOOK";
-        }
-        if(output[0].toUpperCase() == "S")
-        {
-            output[0] = "BOOKST";
         }
         return output;
     };
@@ -265,7 +261,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             }
         }
 
-        // split ProductCode and add the parts in new columns
+        
         for(i=startPoint; i<results.data.length; i++)
         {
             row = results.data[i];
@@ -274,6 +270,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 continue;
             }
             
+            // split ProductCode into Product and Code, and add them as new columns
             split = FactorySplitter(row[columnIndex]);
             var newRow = row.concat(split);
 
