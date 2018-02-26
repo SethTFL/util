@@ -52,6 +52,10 @@
             {
                 padding:0.15em;
             }
+            td:nth-child(n+4)
+            {
+                display:none;
+            }
             .Ship td
             {
                 border-bottom:1px solid #ccc;
@@ -212,7 +216,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     var obj = {};
     
     obj.Code = "PRODUCTCODE";
-    obj.CodeSplit = ["Product", "Code"];
+    obj.CodeSplit = ["Product", "Code", "GS"];
     
     obj.Flip = "MP3CD";
     obj.FlipColumns = [1, 2];
@@ -434,7 +438,6 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                     break;
             }
 
-            //row.splice(row.length-2);
             list.push(row);
         }
 
@@ -526,128 +529,5 @@ App.controller("Controller", ["$scope", "FactoryParser", function($scope, Factor
     };
 }]);    
         </script>
-        <script>
-// given table data, add new columns
-App.factory("LabelData", [function()
-{
-    // split `ProductCode` into the new values: `Product`, `Code`, and `GS`
-    // add the boolean value `Volunteer`
-
-    // if the product is an MP3CD, MCD, 4digitCD, or 4digitDVD set Volunteer to false
-    // if the product is an MP3CD, check Code against a lookup table and set Volunteer to true if its in the list.
-    // if the product is an MP3CD, expand the product to contain it's members.
-
-}]);
-// pivoting code
-App.factory("TableData", [function()
-{
-    var obj = {};
-    obj.Pivot = function(inData, inIndex)
-    {
-        var i;
-        var output;
-        var row;
-        var cell;
-        var match;
-
-        output = [];
-
-        for(i=0; i<inData.Rows.length; i++)
-        {
-            row = inData.Rows[i];
-            cell = row[inIndex];
-            match = false;
-
-            for(j=0; j<output.length; j++)
-            {
-                if(cell.toLowerCase() == output[j].Name.toLowerCase())
-                {
-                    match = true;
-                    output[j].Rows.push(row);
-                    break;
-                }
-            }
-            if(!match)
-            {
-                var newTable;
-
-                newTable = obj.Create();
-                newTable.Name = cell;
-                newTable.Header = inData.Header;
-                newTable.Rows = [row];
-
-                output.push(newTable);
-            }
-        }
-
-        return output;
-    };
-
-    obj.PivotTree = function(inData, inIndexArray)
-    {
-        var i, j, k;
-        var branch;
-        var root;
-
-        var genOld = [];
-        var genNew = [];
-
-        root = inData.Pivot(inIndexArray[0]);
-        genOld = root;
-
-        if(inIndexArray.length > 1)
-        {
-            for(i=1; i<inIndexArray.length; i++)
-            {
-                for(j=0; j<genOld.length; j++)
-                {
-                    branch = genOld[j].Pivot(inIndexArray[i]);
-                    genOld[j].Children = branch;
-                    for(k=0; k<branch.length; k++)
-                    {
-                        genNew.push(branch[k]);
-                    }
-                }
-                
-                genOld = genNew;
-                genNew = [];
-            }
-        }
-
-        return root;
-    };
-
-    obj.Create = function()
-    {
-        var data = {
-            Name:"",
-            Header:[],
-            Rows:[],
-        };
-
-        data.Pivot = function(inIndex)
-        {
-            return obj.Pivot(data, inIndex);
-        };
-
-        return data;
-    }
-
-    return obj;
-}])
-        </script>
-        <!--
-        <script>
-function download(filename, text) {
-  var element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-  element.setAttribute('download', filename);
-  element.style.display = 'none';
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
-}
-        </script>
-        -->
     </body>
 </html>
