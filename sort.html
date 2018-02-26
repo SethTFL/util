@@ -96,6 +96,9 @@
 
         </div>
 
+
+        <script>
+        </script>
         <script>
 var App;
 App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate)
@@ -161,7 +164,7 @@ App.factory("FactorySplitter", [function()
     return function(inID)
     {
         var i;
-        var output = ["", inID];
+        var output = ["", inID, false];
         if(inID)
         {
             
@@ -170,17 +173,18 @@ App.factory("FactorySplitter", [function()
                 // move gs prefix to the end if its there
                 if(inID.substring(0, 2).toUpperCase() == "GS")
                 {
-                    inID = inID.substring(2) + "GS";
+                    inID = inID.substring(2);
+                    output[2] = true;
                 }
 
                 //check for binders (Y prefix) and envelopes (PI prefix)
                 if(inID[0].toUpperCase() == "Y")
                 {
-                    return ["Y", inID.substring(1)];
+                    return ["Y", inID.substring(1), false];
                 }
                 if(inID.substring(0, 2).toUpperCase() == "PI")
                 {
-                    return ["PI", inID.substring(2)];
+                    return ["PI", inID.substring(2), false];
                 }
             }
 
@@ -212,6 +216,20 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
     
     obj.Flip = "MP3CD";
     obj.FlipColumns = [1, 2];
+    obj.ShipIDs = [15905, 14609, 14109, 14212];
+    obj.ShipCheck = function(inID)
+    {
+        var i;
+        for(i=0; i<obj.ShipIDs.length; i++)
+        {
+            if(obj.ShipIDs[i] == inID)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+    
 
     obj.Handler = function(){};
     obj.Parse = function(inData)
@@ -274,7 +292,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             split = FactorySplitter(row[columnIndex]);
             var newRow = row.concat(split);
 
-            // expand volumes
+            // expand mp3cd volumes
             // flip mp3cd code and decriptions
             if(newRow[headerSize] == obj.Flip)
             {
@@ -282,6 +300,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 var wordNumber;
                 var seriesName;
                 var setSize;
+                var numCheck;
                 var j, k;
                 if(words.length > 3)
                 {
@@ -289,35 +308,40 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                     {
                         seriesName = words.slice(0, words.length-3).join(" ");
                         wordNumber = words[words.length-3].toUpperCase();
-                        switch(wordNumber)
+                        
+                        setSize = parseInt(wordNumber);
+                        if(isNaN(setSize))
                         {
-                            case "TWO" :
-                                setSize = 2;
-                                break;
-                            case "THREE" :
-                                setSize = 3;
-                                break;
-                            case "FOUR" :
-                                setSize = 4;
-                                break;
-                            case "FIVE" :
-                                setSize = 5;
-                                break;
-                            case "SIX" :
-                                setSize = 6;
-                                break;
-                            case "SEVEN" :
-                                setSize = 7;
-                                break;
-                            case "EIGHT" :
-                                setSize = 8;
-                                break;
-                            case "NINE" :
-                                setSize = 9;
-                                break;
-                            case "TEN" :
-                                setSize = 10;
-                                break;
+                            switch(wordNumber)
+                            {
+                                case "TWO" :
+                                    setSize = 2;
+                                    break;
+                                case "THREE" :
+                                    setSize = 3;
+                                    break;
+                                case "FOUR" :
+                                    setSize = 4;
+                                    break;
+                                case "FIVE" :
+                                    setSize = 5;
+                                    break;
+                                case "SIX" :
+                                    setSize = 6;
+                                    break;
+                                case "SEVEN" :
+                                    setSize = 7;
+                                    break;
+                                case "EIGHT" :
+                                    setSize = 8;
+                                    break;
+                                case "NINE" :
+                                    setSize = 9;
+                                    break;
+                                case "TEN" :
+                                    setSize = 10;
+                                    break;
+                            }
                         }
 
                         var countDown = parseInt(newRow[headerSize+1]);
@@ -331,7 +355,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                             }
                             copy[headerSize+1] = countDown-j-1; // code
                             copy[1] = copy[headerSize+1] + copy[headerSize]; // productcode
-                            copy[2] = seriesName + " - Volume " + (j+1);
+                            copy[2] = seriesName + " - Volume " + (setSize-j);
 
                             var temp = copy[obj.FlipColumns[0]];
                             copy[obj.FlipColumns[0]] = copy[obj.FlipColumns[1]];
@@ -355,11 +379,13 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         // then remove product and code columns
         for(i=0; i<obj.OutputData.length; i++)
         {
+            var j;
+            var match = false;
             var row = obj.OutputData[i];
             var cut;
             var list = obj.OutputShip;
             var type = row[headerSize].toUpperCase();
-            var id = row[headerSize+1]
+            var id = row[headerSize+1];
             switch(type)
             {
                 case "CD" :
@@ -375,7 +401,10 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                     }
                     break;
                 case "MP3CD" :
-                    list = obj.OutputMake;
+                    if(!obj.ShipCheck(id))
+                    {
+                        list = obj.OutputMake;
+                    }
                     break;
                 case "MCD" :
                     list = obj.OutputMake;
@@ -396,10 +425,12 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             list.push(row);
         }
 
-        // pivot  make on product and then code
+        // pivot make on product then GS then code
         obj.OutputMake.sort(function(a, b)
         {
-            var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
+            var x, y;
+            
+            x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
             if(x<y)
             {
                 return -1;
@@ -408,6 +439,17 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             {
                 return 1;
             }
+
+            x = a[headerSize+2], y = b[headerSize+2];
+            if(x<y)
+            {
+                return -1;
+            }
+            if(x>y)
+            {
+                return 1;
+            }
+
             return a[headerSize+1] - b[headerSize+1];
         });
 
@@ -470,6 +512,116 @@ App.controller("Controller", ["$scope", "FactoryParser", function($scope, Factor
         $scope.Parser.Sort(Papa.parse($scope.Paste));
     };
 }]);    
+        </script>
+        <script>
+// given table data, add new columns
+App.factory("LabelData", [function()
+{
+    // split `ProductCode` into the new values: `Product`, `Code`, and `GS`
+    // add the boolean value `Volunteer`
+
+    // if the product is an MP3CD, MCD, 4digitCD, or 4digitDVD set Volunteer to false
+    // if the product is an MP3CD, check Code against a lookup table and set Volunteer to true if its in the list.
+    // if the product is an MP3CD, expand the product to contain it's members.
+
+}]);
+// pivoting code
+App.factory("TableData", [function()
+{
+    var obj = {};
+    obj.Pivot = function(inData, inIndex)
+    {
+        var i;
+        var output;
+        var row;
+        var cell;
+        var match;
+
+        output = [];
+
+        for(i=0; i<inData.Rows.length; i++)
+        {
+            row = inData.Rows[i];
+            cell = row[inIndex];
+            match = false;
+
+            for(j=0; j<output.length; j++)
+            {
+                if(cell.toLowerCase() == output[j].Name.toLowerCase())
+                {
+                    match = true;
+                    output[j].Rows.push(row);
+                    break;
+                }
+            }
+            if(!match)
+            {
+                var newTable;
+
+                newTable = obj.Create();
+                newTable.Name = cell;
+                newTable.Header = inData.Header;
+                newTable.Rows = [row];
+
+                output.push(newTable);
+            }
+        }
+
+        return output;
+    };
+
+    obj.PivotTree = function(inData, inIndexArray)
+    {
+        var i, j, k;
+        var branch;
+        var root;
+
+        var genOld = [];
+        var genNew = [];
+
+        root = inData.Pivot(inIndexArray[0]);
+        genOld = root;
+
+        if(inIndexArray.length > 1)
+        {
+            for(i=1; i<inIndexArray.length; i++)
+            {
+                for(j=0; j<genOld.length; j++)
+                {
+                    branch = genOld[j].Pivot(inIndexArray[i]);
+                    genOld[j].Children = branch;
+                    for(k=0; k<branch.length; k++)
+                    {
+                        genNew.push(branch[k]);
+                    }
+                }
+                
+                genOld = genNew;
+                genNew = [];
+            }
+        }
+
+        return root;
+    };
+
+    obj.Create = function()
+    {
+        var data = {
+            Name:"",
+            Header:[],
+            Rows:[],
+        };
+
+        data.Pivot = function(inIndex)
+        {
+            return obj.Pivot(data, inIndex);
+        };
+
+        return data;
+    }
+
+    return obj;
+}])
         </script>
         <!--
         <script>
