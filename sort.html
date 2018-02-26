@@ -52,7 +52,7 @@
             {
                 padding:0.15em;
             }
-            td:nth-child(n+4)
+            .List td:nth-child(n+4)
             {
                 display:none;
             }
@@ -73,7 +73,7 @@
         </style>
     </head>
     <body>
-        <div ng-app="App" ng-controller="Controller">
+        <div ng-app="App" ng-controller="Controller" ng-cloak>
             <form ng-hide="(Parser.OutputShip.length + Parser.OutputMake.length) > 0" ng-submit="Convert();">
                 <label>Upload/drag-and-drop CSV:</label>
                 <input type="file" data-import-csv class="form-control">
@@ -81,7 +81,7 @@
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
 
-            <table class="Ship" cellpadding="0" cellspacing="0">
+            <table class="List Ship" cellpadding="0" cellspacing="0">
                 <tr ng-repeat="Row in Parser.OutputHead track by $index">
                     <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
                 </tr>
@@ -89,7 +89,7 @@
                     <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
                 </tr>
             </table>
-            <table class="Make" style="page-break-before:always;" cellpadding="0" cellspacing="0">
+            <table class="List Make" style="page-break-before:always;" cellpadding="0" cellspacing="0">
                 <tr ng-repeat="Row in Parser.OutputHead track by $index">
                     <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
                 </tr>
@@ -97,7 +97,22 @@
                     <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
                 </tr>
             </table>
-
+            <table class="Count" ng-show="Parser.OutputMake.length > 0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <th>MP3CDs and CDs:</th>
+                    <th>MP3CDs:</th>
+                    <th>CDs:</th>
+                    <th>DVDs:</th>
+                    <th>MCDs:</th>
+                </tr>
+                <tr>
+                    <td>{[{Parser.Total.MP3CD + Parser.Total.CD}]}</td>
+                    <td>{[{Parser.Total.MP3CD}]}</td>
+                    <td>{[{Parser.Total.CD}]}</td>
+                    <td>{[{Parser.Total.DVD}]}</td>
+                    <td>{[{Parser.Total.MCD}]}</td>
+                </tr>
+            </table>
         </div>
 
 
@@ -256,6 +271,12 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
         obj.OutputMake = [];
         obj.OutputShip = [];
         obj.OutputMisc = [];
+        obj.Total = {
+            CD: 0,
+            DVD: 0,
+            MP3CD: 0,
+            MCD: 0
+        };
 
         var i, j;
         var startPoint = 0;
@@ -408,22 +429,26 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 case "CD" :
                     if(id.length == 4)
                     {
+                        obj.Total[type] += parseInt(row[0]);
                         list = obj.OutputMake;
                     }
                     break;
                 case "DVD" :
                     if(id.length == 4)
                     {
+                        obj.Total[type] += parseInt(row[0]);
                         list = obj.OutputMake;
                     }
                     break;
                 case "MP3CD" :
                     if(!obj.ShipCheck(id))
                     {
+                        obj.Total[type] += parseInt(row[0]);
                         list = obj.OutputMake;
                     }
                     break;
                 case "MCD" :
+                    obj.Total[type] += parseInt(row[0]);
                     list = obj.OutputMake;
                     break;
 
