@@ -52,10 +52,12 @@
             {
                 padding:0.15em;
             }
+            /*
             .List td:nth-child(n+4)
             {
                 display:none;
             }
+            */
             .Ship td
             {
                 border-bottom:1px solid #ccc;
@@ -329,6 +331,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
                 var numCheck = false;
                 var j, k;
 
+              
                 if(words.length > 3)
                 {
                     for(j=0; j<words.length; j++)
@@ -467,7 +470,7 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             list.push(row);
         }
 
-        // pivot make on product then GS then code
+        // pivot make on product then GS then: code or description if its mp3cd (which will have moved into the second columnn :O )
         obj.OutputMake.sort(function(a, b)
         {
             var x, y;
@@ -491,8 +494,23 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
             {
                 return 1;
             }
-
-            return a[headerSize+1] - b[headerSize+1];
+            
+            if(a[3].toUpperCase() == "MP3CD")
+            {
+                x = a[1], y = b[1];
+                if(x<y)
+                {
+                    return -1;
+                }
+                if(x>y)
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                return a[headerSize+1] - b[headerSize+1];
+            }
         });
 
         // pivot ship (volunteer) on type then description
