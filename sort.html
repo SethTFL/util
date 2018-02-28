@@ -319,17 +319,23 @@ App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
 
             // expand mp3cd volumes
             // flip mp3cd code and decriptions
+            
             if(newRow[headerSize] == obj.Flip)
             {
                 var words = newRow[2].replace(/[-(),]/g, '').split(" ");
                 var wordNumber;
                 var seriesName;
                 var setSize;
-                var numCheck;
+                var numCheck = false;
                 var j, k;
+
+                if(newRow[2] == "Life in the Spirit")
+                {
+                    console.log("test case");
+                }
+
                 if(words.length > 3)
                 {
-
                     for(j=0; j<words.length; j++)
                     {
                         if(words[j].toUpperCase() == "VOLUME")
