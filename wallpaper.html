@@ -104,7 +104,7 @@ elements.source.parentNode.removeChild(elements.source);
 elements.form.addEventListener('submit', function(e)
 {
     e.preventDefault();
-    elements.output.innerHTML = elements.source.innerHTML.split("{---}").join(elements.input.value);
+    elements.output.innerHTML = elements.source.innerHTML.split("{---}").join("_"+elements.input.value+"/"+elements.input.value+"_");
 });
 </script>
     </body>
