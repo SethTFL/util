@@ -3,8 +3,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="papaparse.js"></script>
+        
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
+        <script src="Tabular.js"></script>
+        <script src="papaparse.js"></script>
         <style>
             *
             {
@@ -39,92 +41,124 @@
                 border-color:#FA0;
                 background: #fdd48f;
             }
-            table
+            table, h2
             {
-                width:80%;
-                margin:0 auto;
+                width:450px;
+                margin:0 auto 1rem
+            }
+            table:hover
+            {
+                background:#bbb;
             }
             tr:hover
             {
-                background:#ddd;
+                background:#fff;
             }
             td
             {
                 padding:0.15em;
+                border-bottom:1px dashed #999;
             }
-            .List td:nth-child(n+4)
+            td.Extra
             {
                 display:none;
             }
-            .Ship td
+            td.Count
             {
-                border-bottom:1px solid #ccc;
+                width:50px;
             }
-            .Make td
+            td.ProductCode
             {
-                border-bottom:1px dashed #999;
+                width:100px;
+            }
+            td.Description
+            {
+                width:300px;
             }
             th
             {
                 text-align:left;
-                padding-top:10px;
-                padding-bottom:5px;
+            }
+            h2
+            {
+                font-size:1.8em;
             }
         </style>
     </head>
     <body>
         <div ng-app="App" ng-controller="Controller" ng-cloak>
-            <form ng-hide="(Parser.OutputShip.length + Parser.OutputMake.length) > 0" ng-submit="Convert();">
+            
+            <form ng-hide="Done">
                 <label>Upload/drag-and-drop CSV:</label>
                 <input type="file" data-import-csv class="form-control">
                 <label>Pase from Excel:</label>
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
+            
+            <h2 ng-show="Done">Volunteer</h2>
+            <table class="Ship" ng-show="Product.Count" ng-repeat="(Key, Product) in Ship">
+                <tr>
+                    <th colspan="3"><strong ng-bind="Key"></strong>: <em ng-bind="Product.Count"></em></th>
+                </tr>
+                <tr ng-if="Row.Product != 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.ProductCode"></td>
+                    <td class="Standard Description" ng-bind="Row.Description"></td>
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>
+                </tr>
+                <tr ng-if="Row.Product == 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    
+                    <td class="Standard Description" ng-bind="Row.Description"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.ProductCode"></td>
+                    
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>
+                </tr>
+            </table>
+            
+            <h2 ng-show="Done" style="page-break-before:always;">Create</h2>
+            <table class="Make" ng-show="Product.Count" ng-repeat="(Key, Product) in Make">
+                <tr>
+                    <th colspan="3"><strong ng-bind="Key"></strong>: <em ng-bind="Product.Count"></em></th>
+                </tr>
+                <tr ng-if="Row.Product != 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.ProductCode"></td>
+                    <td class="Standard Description" ng-bind="Row.Description"></td>
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>
+                </tr>
+                <tr ng-if="Row.Product == 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
 
-            <table class="List Ship" cellpadding="0" cellspacing="0">
-                <tr ng-repeat="Row in Parser.OutputHead track by $index">
-                    <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
-                </tr>
-                <tr ng-repeat="Row in Parser.OutputShip track by $index">
-                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
-                </tr>
-            </table>
-            <table class="List Make" style="page-break-before:always;" cellpadding="0" cellspacing="0">
-                <tr ng-repeat="Row in Parser.OutputHead track by $index">
-                    <th ng-repeat="Cell in Row track by $index">{[{Cell}]}</th>
-                </tr>
-                <tr ng-repeat="Row in Parser.OutputMake track by $index">
-                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                    <td class="Standard Description" ng-bind="Row.Description"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.ProductCode"></td>
+
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>
                 </tr>
             </table>
-            <table class="Count" ng-show="Parser.OutputMake.length > 0" cellpadding="0" cellspacing="0">
+            <table class="Make" ng-show="Done">
                 <tr>
-                    <th>MP3CDs and CDs:</th>
-                    <th>MP3CDs:</th>
-                    <th>CDs:</th>
-                    <th>DVDs:</th>
-                    <th>MCDs:</th>
-                </tr>
-                <tr>
-                    <td>{[{Parser.Total.MP3CD + Parser.Total.CD}]}</td>
-                    <td>{[{Parser.Total.MP3CD}]}</td>
-                    <td>{[{Parser.Total.CD}]}</td>
-                    <td>{[{Parser.Total.DVD}]}</td>
-                    <td>{[{Parser.Total.MCD}]}</td>
+                    <th><strong>MP3CDs and CDs</strong>: <em ng-bind="Make.MP3CD.Count + Make.CD.Count;"></em></th>
                 </tr>
             </table>
+            
         </div>
 
-
-        <script>
-        </script>
         <script>
 var App;
-App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate)
+App = angular.module("App", ["Tabular"]).config(["$interpolateProvider", function(inInterpolate)
 {
     inInterpolate.startSymbol('{[{').endSymbol('}]}');
 }]);
-App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser)
+App.directive("importCsv", ["Rows", function(Rows)
 {
 
     var directive = {};
@@ -152,17 +186,25 @@ App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, Factor
         function handlerChange(inEvent){
             inEvent.stopImmediatePropagation();
             parse(inEvent.target.files[0]);
-        };
-        
-        function parse(inFile){
-            FactoryParser.Parse(inFile);
         }
         
-        function handlerLeave(){
+        
+        function handlerLeave()
+        {
             inElement.removeClass("Import");
         }
         
-        
+        function parse(inFile)
+        {
+            Papa.parse(inFile, {
+                complete: function(inCSV)
+                {
+                    Rows(inCSV.data);
+                    inScope.$apply();
+                }
+            });
+        }
+
         
         inElement.on("dragenter dragstart dragend dragleave dragover drag drop", function (inEvent) {inEvent.preventDefault();});
         inElement.on('dragenter', handlerEnter);
@@ -178,414 +220,359 @@ App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, Factor
     return directive;
     
 }]);
-App.factory("FactorySplitter", [function()
-{
-    return function(inID)
-    {
-        var i;
-        var output = ["", inID, false];
-        if(inID)
-        {
-            
-            if(inID.length > 1)
-            {
-                // move gs prefix to the end if its there
-                if(inID.substring(0, 2).toUpperCase() == "GS")
-                {
-                    inID = inID.substring(2);
-                    output[2] = true;
-                }
-
-                //check for binders (Y prefix) and envelopes (PI prefix)
-                if(inID[0].toUpperCase() == "Y")
-                {
-                    return ["Y", inID.substring(1), false];
-                }
-                if(inID.substring(0, 2).toUpperCase() == "PI")
-                {
-                    return ["PI", inID.substring(2), false];
-                }
-            }
-
-            for(i=0; i<inID.length; i++)
-            {
-                if(isNaN(parseInt( inID[i] )))
-                {
-                    output[0] = inID.substring(i);
-                    output[1] = inID.substring(0, i);
-                    break;
-                }
-            }
-        }
-
-        //check for books and study books
-        if(output[0] == "" || output[0].toUpperCase() == "S")
-        {
-            output[0] = "BOOK";
-        }
-        return output;
-    };
-}]);
-App.factory("FactoryParser", ["FactorySplitter", function(FactorySplitter)
+App.factory("Sort", [function()
 {
     var obj = {};
-    
-    obj.Code = "PRODUCTCODE";
-    obj.CodeSplit = ["Product", "Code", "GS"];
-    
-    obj.Flip = "MP3CD";
-    obj.FlipColumns = [1, 2];
-    obj.ShipIDs = [15905, 14609, 14109, 14212];
-    obj.ShipCheck = function(inID)
+    obj.SortInternal = function(x, y)
     {
-        var i;
-        for(i=0; i<obj.ShipIDs.length; i++)
-        {
-            if(obj.ShipIDs[i] == inID)
-            {
-                return true;
-            }
-        }
-        return false;
-    };
-    
-
-    obj.Handler = function(){};
-    obj.Parse = function(inData)
+        if(x<y){return -1;}
+        if(x>y){return 1;}
+        return 0;  
+    }
+    obj.PivotDescription = function(a, b)
     {
-        
-        Papa.parse(inData, {
-            complete: function(results)
-            {
-                obj.Sort(results);
-                obj.Handler(obj.Output);
-            }
-        });
-
+        var move;
+        move = obj.SortInternal(a.GS, b.GS);
+        if(move == 0)
+        {
+            move = obj.SortInternal(a.Description, b.Description);
+        }
+        return move;
     };
-
-    obj.Sort = function(results) {
-        
-        obj.OutputHead = [];
-        obj.OutputData = [];
-        obj.OutputMake = [];
-        obj.OutputShip = [];
-        obj.OutputMisc = [];
-        obj.Total = {
-            CD: 0,
-            DVD: 0,
-            MP3CD: 0,
-            MCD: 0
-        };
-
-        var i, j;
-        var startPoint = 0;
-        var columnIndex = 1;
-        var row;
-        var split;
-        var headerSize = 3;
-        
-        // find the header
-        outer:
-        for(i=0; i<results.data.length; i++)
+    obj.PivotCode = function(a, b)
+    {
+        var move;
+        move = obj.SortInternal(a.GS, b.GS);
+        if(move == 0)
         {
-            row = results.data[i];
-            for(j=0; j<row.length; j++)
-            {
-                if(row[j].toUpperCase() === obj.Code)
-                {
-                    obj.OutputHead.push(row);
-                    columnIndex = j;
-                    startPoint = i+1;
-                    headerSize = row.length;
-                    //obj.Output[obj.Output.length-1] = row.concat(obj.CodeSplit);
-                    break outer;
-                }
-            }
+            move = obj.SortInternal(a.Code, b.Code);
         }
-
-        
-        for(i=startPoint; i<results.data.length; i++)
-        {
-            row = results.data[i];
-            if(row.length == 1 && row[0] == "")
-            {
-                continue;
-            }
-            
-            // split ProductCode into Product and Code, and add them as new columns
-            split = FactorySplitter(row[columnIndex]);
-            var newRow = row.concat(split);
-
-            // expand mp3cd volumes
-            // flip mp3cd code and decriptions
-            if(newRow[headerSize] == obj.Flip)
-            {
-                var words = newRow[2].replace(/[-(),]/g, '').split(" ");
-                var wordNumber;
-                var seriesName;
-                var setSize;
-                var numCheck = false;
-                var j, k;
-
-              
-                if(words.length > 3)
-                {
-                    for(j=0; j<words.length; j++)
-                    {
-                        if(words[j].toUpperCase() == "VOLUME")
-                        {
-                            if(words[j+1] && words[j+1].toUpperCase() == "SET")
-                            {
-                                numCheck = true;
-                                wordNumber = words[j-1].toUpperCase();
-                                words.splice(j-1, 3);
-                                seriesName = words.join(" ");
-                                break;
-                            }
-                        }
-                    }
-
-                    if(numCheck)
-                    {
-                        setSize = parseInt(wordNumber);
-                        if(isNaN(setSize))
-                        {
-                            switch(wordNumber)
-                            {
-                                case "TWO" :
-                                    setSize = 2;
-                                    break;
-                                case "THREE" :
-                                    setSize = 3;
-                                    break;
-                                case "FOUR" :
-                                    setSize = 4;
-                                    break;
-                                case "FIVE" :
-                                    setSize = 5;
-                                    break;
-                                case "SIX" :
-                                    setSize = 6;
-                                    break;
-                                case "SEVEN" :
-                                    setSize = 7;
-                                    break;
-                                case "EIGHT" :
-                                    setSize = 8;
-                                    break;
-                                case "NINE" :
-                                    setSize = 9;
-                                    break;
-                                case "TEN" :
-                                    setSize = 10;
-                                    break;
-                            }
-                        }
-
-                        var countDown = parseInt(newRow[headerSize+1]);
-                        var copy;
-                        for(j=0; j<setSize; j++)
-                        {
-                            copy = [];
-                            for(k=0; k<newRow.length; k++)
-                            {
-                                copy[k] = newRow[k];
-                            }
-                            copy[headerSize+1] = countDown-j-1; // code
-                            copy[1] = copy[headerSize+1] + copy[headerSize]; // productcode
-                            copy[2] = seriesName + " - Volume " + (setSize-j);
-
-                            var temp = copy[obj.FlipColumns[0]];
-                            copy[obj.FlipColumns[0]] = copy[obj.FlipColumns[1]];
-                            copy[obj.FlipColumns[1]] = temp;
-                            obj.OutputData.push(copy);
-                        }
-
-                        continue;
-                    }
-                }
-
-                var temp = newRow[obj.FlipColumns[0]];
-                newRow[obj.FlipColumns[0]] = newRow[obj.FlipColumns[1]];
-                newRow[obj.FlipColumns[1]] = temp;
-            }
-            obj.OutputData.push(newRow);
-        }
-
-        // split into three lists...
-        // extract 4-digit CDs, all DVDs, and all MP3CDs
-        // then remove product and code columns
-        for(i=0; i<obj.OutputData.length; i++)
-        {
-            var j;
-            var match = false;
-            var row = obj.OutputData[i];
-            var cut;
-            var list = obj.OutputShip;
-            var type = row[headerSize].toUpperCase();
-            var id = row[headerSize+1];
-            switch(type)
-            {
-                case "CD" :
-                    if(id.length == 4)
-                    {
-                        obj.Total[type] += parseInt(row[0]);
-                        list = obj.OutputMake;
-                    }
-                    break;
-                case "DVD" :
-                    if(id.length == 4)
-                    {
-                        obj.Total[type] += parseInt(row[0]);
-                        list = obj.OutputMake;
-                    }
-                    break;
-                case "MP3CD" :
-                    if(!obj.ShipCheck(id))
-                    {
-                        obj.Total[type] += parseInt(row[0]);
-                        list = obj.OutputMake;
-                    }
-                    break;
-                case "MCD" :
-                    obj.Total[type] += parseInt(row[0]);
-                    list = obj.OutputMake;
-                    break;
-
-                case "PI" :
-                    list = obj.OutputMisc;
-                    break;
-                case "SHIPADJ" :
-                    list = obj.OutputMisc;
-                    break;
-                case "Y" :
-                    list = obj.OutputMisc;
-                    break;
-            }
-
-            list.push(row);
-        }
-
-        // pivot make on product then GS then: code or description if its mp3cd (which will have moved into the second columnn :O )
-        obj.OutputMake.sort(function(a, b)
-        {
-            var x, y;
-            
-            x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
-            if(x<y)
-            {
-                return -1;
-            }
-            if(x>y)
-            {
-                return 1;
-            }
-
-            x = a[headerSize+2], y = b[headerSize+2];
-            if(x<y)
-            {
-                return -1;
-            }
-            if(x>y)
-            {
-                return 1;
-            }
-            
-            if(a[3].toUpperCase() == "MP3CD")
-            {
-                x = a[1], y = b[1];
-                if(x<y)
-                {
-                    return -1;
-                }
-                if(x>y)
-                {
-                    return 1;
-                }
-            }
-            else
-            {
-                return a[headerSize+1] - b[headerSize+1];
-            }
-        });
-
-        // pivot ship (volunteer) on type then description
-        obj.OutputShip.sort(function(a, b)
-        {
-            var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
-            if(x<y)
-            {
-                return -1;
-            }
-            if(x>y)
-            {
-                return 1;
-            }
-
-            var x = a[2].toLowerCase(), y = b[2].toLowerCase();
-            if(x<y)
-            {
-                return -1;
-            }
-            if(x>y)
-            {
-                return 1;
-            }
-        });
-
-        function gaps(inArray)
-        {
-            for(i=0; i<inArray.length-1; i++)
-            {
-                if(inArray[i][3] != inArray[i+1][3])
-                {
-                    inArray.splice(i+1, 0, ["---", "---", "---"]);
-                    i++;
-                }
-            }
-        }
-        gaps(obj.OutputShip);
-        gaps(obj.OutputMake);
-
-        // pivot misc
-        obj.OutputMisc.sort(function(a, b)
-        {
-            var x = a[headerSize].toLowerCase(), y = b[headerSize].toLowerCase();
-            if(x<y)
-            {
-                return -1;
-            }
-            if(x>y)
-            {
-                return 1;
-            }
-            return a[headerSize+1] - b[headerSize+1];
-        });
-
-        // stich OutputMisc back onto output Ship
-        if(obj.OutputMisc.length != 0)
-        {
-            obj.OutputShip.push(["---", "---", "---"]);
-            obj.OutputShip = obj.OutputShip.concat(obj.OutputMisc);
-        }
-
+        return move;
     };
-
     return obj;
 }]);
-App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
+App.factory("Collection", [function()
 {
-    $scope.Parser = FactoryParser;
-    $scope.Paste = "";
-    $scope.Parser.Handler = function(inData)
+    return function(inName, inSort)
     {
-        $scope.$apply();
+        var col;
+        col = {};
+        col.Name = inName;
+        col.Count = 0;
+        col.Rows = [];
+        col.Sort = inSort;
+        col.push = function(inRow)
+        {
+            col.Rows.push(inRow);
+            col.Count += inRow.Count;
+        };
+        col.Update = function()
+        {
+            col.Rows.sort(col.Sort);
+        };
+        return col;
+    }
+}]);
+App.factory("Collections", ["Sort", "Collection", function(Sort, Collection)
+{
+    var obj;
+    obj = {};
+    obj.All = [
+        Collection("Book", Sort.PivotDescription),
+        Collection("CD", Sort.PivotDescription),
+        Collection("MP3CD", Sort.PivotDescription),
+        Collection("USB", Sort.PivotDescription),
+        Collection("Misc", Sort.PivotDescription),
+        
+        Collection("CD", Sort.PivotCode),
+        Collection("DVD", Sort.PivotCode),
+        Collection("MCD", Sort.PivotCode),
+        Collection("MP3CD", Sort.PivotDescription),
+    ];
+    obj.Ship = {
+        Book:obj.All[0],
+        CD:obj.All[1],
+        MP3CD:obj.All[2],
+        USB:obj.All[3],
+        Misc:obj.All[4]
     };
+    obj.Make = {
+        CD:obj.All[5],
+        DVD:obj.All[6],
+        MCD:obj.All[7],
+        MP3CD:obj.All[8] 
+    };
+    
+    obj.Done = function(){};
+    obj.Sort = function()
+    {
+        var i;
+        for(i=0; i<obj.All.length; i++)
+        {
+            obj.All[i].Update();
+        }
+    };
+    
+    return obj;
+}]);
+App.factory("Exceptions", [function()
+{
+    return [15905, 14609, 14109, 14212];
+}]);
+
+App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exceptions)
+{
+    return function(inRow)
+    {
+        var i;
+        var row;
+        var exceptionsLUT;
+        
+        if(inRow.length < 3)
+        {
+            return;
+        }
+        
+        function Expand(inRow, inCollection)
+        {
+            var words = inRow.Description.replace(/[-(),]/g, '').split(" ");
+            var wordNumber;
+            var seriesName;
+            var setSize;
+            var numCheck = false;
+            var j, k;
+        
+            if(words.length > 3)
+            {
+                for(j=0; j<words.length; j++)
+                {
+                    if(words[j].toUpperCase() == "VOLUME")
+                    {
+                        if(words[j+1] && words[j+1].toUpperCase() == "SET")
+                        {
+                            numCheck = true;
+                            wordNumber = words[j-1].toUpperCase();
+                            words.splice(j-1, 3);
+                            seriesName = words.join(" ");
+                            break;
+                        }
+                    }
+                }
+        
+                if(numCheck)
+                {
+                    setSize = parseInt(wordNumber);
+                    if(isNaN(setSize))
+                    {
+                        switch(wordNumber)
+                        {
+                            case "TWO" :
+                                setSize = 2;
+                                break;
+                            case "THREE" :
+                                setSize = 3;
+                                break;
+                            case "FOUR" :
+                                setSize = 4;
+                                break;
+                            case "FIVE" :
+                                setSize = 5;
+                                break;
+                            case "SIX" :
+                                setSize = 6;
+                                break;
+                            case "SEVEN" :
+                                setSize = 7;
+                                break;
+                            case "EIGHT" :
+                                setSize = 8;
+                                break;
+                            case "NINE" :
+                                setSize = 9;
+                                break;
+                            case "TEN" :
+                                setSize = 10;
+                                break;
+                        }
+                    }
+        
+                    var countDown = parseInt(inRow.Code);
+                    var copy;
+                    var copies = [];
+                    for(j=0; j<setSize; j++)
+                    {
+                        copy = {};
+                        for(prop in inRow)
+                        {
+                            copy[prop] = inRow[prop];
+                        }
+                        copy.Code = countDown-j-1; // code
+                        copy.ProductCode = copy.Code + copy.Product; // productcode
+                        copy.Description = seriesName + " - Volume " + (setSize-j);
+                        
+                        inCollection.push(copy);
+                    }
+                    return true;
+                }
+                
+                inCollection.push(inRow);
+                return false;
+            }
+        }
+
+        row = {
+            Count:parseInt(inRow[0]),
+            ProductCode:inRow[1].toUpperCase(),
+            Description:inRow[2],
+            Product:"",
+            Code:0,
+            GS:false,
+        };
+        
+        // check for prefixes
+        // remove gs prefix
+        var gsClip = row.ProductCode;
+        var firstTwo = gsClip.substring(0, 2);
+        if(firstTwo == "GS")
+        {
+            gsClip = row.ProductCode.substring(2);
+            row.GS = true;
+        } //continue processing using gsClip instead of row.ProductCode
+        else
+        {
+            if(firstTwo == "PI")
+            {
+                row.Product = "PI";
+                row.Code = parseInt(gsClip.substring(2));
+                Collections.Ship.Misc.push(row);
+                return row;
+            }
+            if(firstTwo[0] == "Y")
+            {
+                row.Product = "Y";
+                row.Code = parseInt(gsClip.substring(1));
+                Collections.Ship.Misc.push(row);
+                return row;
+            }
+        }
+        
+        // operate on the rest of the products by cutting product code on the first non-number character
+        for(i=0; i<gsClip.length; i++)
+        {
+            if(isNaN(parseInt( gsClip[i] )))
+            {
+                row.Product = gsClip.substring(i);
+                row.Code = parseInt(gsClip.substring(0, i));
+                break;
+            }
+        }
+
+        if(row.Product == "" || row.Product == "S" || row.Product == "A")
+        {
+            row.Product = "BOOK";
+            Collections.Ship.Book.push(row);
+            return row;
+        }
+        
+        if(row.Product == "CD")
+        {
+            if(row.Code > 9999)
+            {
+                Collections.Ship.CD.push(row);
+                return;
+            }
+            Collections.Make.CD.push(row);
+            return;
+        }
+        
+        if(row.Product == "DVD")
+        {
+            if(row.Code > 9999)
+            {
+                Collections.Ship.DVD.push(row);
+                return;
+            }
+            Collections.Make.DVD.push(row);
+            return;
+        }
+        
+        if(row.Product == "MCD")
+        {
+            Collections.Make.MCD.push(row);
+            return;
+        }
+        
+        if(row.Product == "MP3CD")
+        {
+            for(i=0; i<Exceptions.length; i++)
+            {
+                if(row.Code == Exceptions[i])
+                {
+                    Collections.Ship.MP3CD.push(row)
+                    return;
+                }
+            }
+            Expand(row, Collections.Make.MP3CD);
+            return;
+        }
+        
+        if(row.Product == "USB")
+        {
+            Collections.Ship.USB.push(row);
+            return;
+        }
+    };
+}]);
+App.factory("Rows", ["Catalogue", "Collections", function(Catalogue, Collections)
+{
+    return function(inData)
+    {
+        var rows;
+        var i, j;
+        var cut;
+        
+        function cut(inTable)
+        {
+            var i, j;
+            for(i=0; i<inTable.length; i++)
+            {
+                for(j=0; j<inTable[i].length; j++)
+                {
+                    if(inTable[i][j].toUpperCase() == "PRODUCTCODE")
+                    {
+                        inTable.splice(0, i+1);
+                        return inTable;
+                    }
+                }
+            }
+        }
+        
+        cut(inData);
+        for(i=0; i<inData.length; i++)
+        {
+            Catalogue(inData[i]);
+        }
+        Collections.Sort();
+        Collections.Done();
+    }
+}]);
+App.controller("Controller", ["$scope", "Rows", "Collections", function($scope, Rows, Collections)
+{
+    Collections.Done = function()
+    {
+        $scope.Done = true;
+    };
+
     $scope.Convert = function()
     {
-        $scope.Parser.Sort(Papa.parse($scope.Paste));
+        Rows(Papa.parse($scope.Paste).data);
     };
+    
+    $scope.Done = false;  
+    $scope.Paste = "";
+    $scope.Ship = Collections.Ship;
+    $scope.Make = Collections.Make;
+    
 }]);    
         </script>
     </body>
