@@ -48,41 +48,38 @@
             }
             table:hover
             {
-                background:#efefef;
-            }
-            table:hover th
-            {
-                background:#000;
-                color:#fff;
-            }
-            table:hover th *
-            {
-                color:#fff;
+                background:#bbb;
             }
             tr:hover
             {
-                background:#ddd;
+                background:#fff;
             }
             td
             {
                 padding:0.15em;
+                border-bottom:1px dashed #999;
             }
-            .List td:nth-child(n+4)
+            td.Extra
             {
                 display:none;
             }
-            .Ship td
+            td.Count
             {
-                border-bottom:1px solid #ccc;
+                width:50px;
             }
-            .Make td
+            td.ProductCode
             {
-                border-bottom:1px dashed #999;
+                width:200px;
             }
             th
             {
                 text-align:left;
-                padding:5px;
+            }
+            h2
+            {
+                margin-top:1em;
+                text-align:center;
+                font-size:1.3em;
             }
         </style>
     </head>
@@ -95,21 +92,49 @@
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
             
-            <table class="Ship" ng-show="Done && Product.Count != 0" ng-repeat="(Key, Product) in Ship">
+            <h2 ng-show="Done">Volunteer</h2>
+            <table class="Ship" ng-show="Product.Count" ng-repeat="(Key, Product) in Ship">
                 <tr>
-                    <th><strong ng-bind="Key"></strong>: <em ng-bind="Product.Count"></em></th>
+                    <th colspan="3"><strong ng-bind="Key"></strong>: <em ng-bind="Product.Count"></em></th>
                 </tr>
-                <tr ng-repeat="Row in Product.Rows track by $index">
-                    <td ng-repeat="Cell in Row track by $index" ng-bind="Cell"></td>
+                <tr ng-if="Row.Product != 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.ProductCode"></td>
+                    <td class="Standard Description" ng-bind="Row.Description"></td>
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>
+                </tr>
+                <tr ng-if="Row.Product == 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.Description"></td>
+                    <td class="Standard Description" ng-bind="Row.ProductCode"></td>
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>>
                 </tr>
             </table>
             
-            <table class="Make" ng-show="Done && Product.Count != 0" ng-repeat="(Key, Product) in Make">
+            <h2 ng-show="Done" style="page-break-before:always;">Create</h2>
+            <table class="Make" ng-show="Product.Count" ng-repeat="(Key, Product) in Make">
                 <tr>
-                    <th><strong ng-bind="Key"></strong>: <em ng-bind="Product.Count"></em></th>
+                    <th colspan="3"><strong ng-bind="Key"></strong>: <em ng-bind="Product.Count"></em></th>
                 </tr>
-                <tr ng-repeat="Row in Product.Rows track by $index">
-                    <td ng-repeat="Cell in Row track by $index" ng-bind="Cell"></td>
+                <tr ng-if="Row.Product != 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.ProductCode"></td>
+                    <td class="Standard Description" ng-bind="Row.Description"></td>
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>
+                </tr>
+                <tr ng-if="Row.Product == 'MP3CD'" ng-repeat="Row in Product.Rows track by $index">
+                    <td class="Standard Count" ng-bind="Row.Count"></td>
+                    <td class="Standard ProductCode" ng-bind="Row.Description"></td>
+                    <td class="Standard Description" ng-bind="Row.ProductCode"></td>
+                    <td class="Extra Product" ng-bind="Row.Product"></td>
+                    <td class="Extra Code" ng-bind="Row.Code"></td>
+                    <td class="Extra GS" ng-bind="Row.GS"></td>>
                 </tr>
             </table>
             <table class="Make" ng-show="Done">
@@ -388,6 +413,8 @@ App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exc
             return;
         }
         
+        
+        
         row = {
             Count:parseInt(inRow[0]),
             ProductCode:inRow[1].toUpperCase(),
@@ -526,7 +553,7 @@ App.factory("Rows", ["Catalogue", "Collections", function(Catalogue, Collections
         Collections.Done();
     }
 }]);
-App.controller("Controller", ["$scope", "Rows", "Collections", "Catalogue", function($scope, Rows, Collections, Catalogue)
+App.controller("Controller", ["$scope", "Rows", "Collections", function($scope, Rows, Collections)
 {
     Collections.Done = function()
     {
