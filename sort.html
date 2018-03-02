@@ -44,7 +44,11 @@
             table
             {
                 width:80%;
-                margin:0 auto;
+                margin:0 auto 1rem
+            }
+            table:hover
+            {
+                background:#efefef;
             }
             tr:hover
             {
@@ -84,21 +88,26 @@
                 <img src="http://thecatapi.com/api/images/get?format=src&type=jpg">
             </form>
             
-            <table ng-show="Done" ng-repeat="(Key, Product) in Ship">
+            <table class="Ship" ng-show="Done && Product.length != 0" ng-repeat="(Key, Product) in Ship">
                 <tr>
-                    <td ng-bind="Count(Product);"></td>
+                    <td><strong ng-bind="Key"></strong>: <em ng-bind="Count(Product);"></em></td>
                 </tr>
                 <tr ng-repeat="Row in Product track by $index">
                     <td ng-repeat="Cell in Row track by $index" ng-bind="Cell"></td>
                 </tr>
             </table>
             
-            <table ng-show="Done" ng-repeat="(Key, Product) in Make">
+            <table class="Make" ng-show="Done && Product.length != 0" ng-repeat="(Key, Product) in Make">
                 <tr>
-                    <td ng-bind="Count(Product);"></td>
+                    <td><strong ng-bind="Key"></strong>: <em ng-bind="Count(Product);"></em></td>
                 </tr>
                 <tr ng-repeat="Row in Product track by $index">
                     <td ng-repeat="Cell in Row track by $index" ng-bind="Cell"></td>
+                </tr>
+            </table>
+            <table class="Make" ng-show="Done">
+                <tr>
+                    <td><strong>MP3CDs and CDs</strong>: <em ng-bind="Count(Make.MP3CDs) + Count(Make.CDs);"></em></td>
                 </tr>
             </table>
             
@@ -195,6 +204,107 @@ App.factory("Exceptions", [function()
 {
     return [15905, 14609, 14109, 14212];
 }]);
+
+function Expand(newRow, inCollection)
+{
+    var words = newRow.Description.replace(/[-(),]/g, '').split(" ");
+    var wordNumber;
+    var seriesName;
+    var setSize;
+    var numCheck = false;
+    var j, k;
+
+    if(words.length > 3)
+    {
+        for(j=0; j<words.length; j++)
+        {
+            if(words[j].toUpperCase() == "VOLUME")
+            {
+                if(words[j+1] && words[j+1].toUpperCase() == "SET")
+                {
+                    numCheck = true;
+                    wordNumber = words[j-1].toUpperCase();
+                    words.splice(j-1, 3);
+                    seriesName = words.join(" ");
+                    break;
+                }
+            }
+        }
+
+        if(numCheck)
+        {
+            setSize = parseInt(wordNumber);
+            if(isNaN(setSize))
+            {
+                switch(wordNumber)
+                {
+                    case "TWO" :
+                        setSize = 2;
+                        break;
+                    case "THREE" :
+                        setSize = 3;
+                        break;
+                    case "FOUR" :
+                        setSize = 4;
+                        break;
+                    case "FIVE" :
+                        setSize = 5;
+                        break;
+                    case "SIX" :
+                        setSize = 6;
+                        break;
+                    case "SEVEN" :
+                        setSize = 7;
+                        break;
+                    case "EIGHT" :
+                        setSize = 8;
+                        break;
+                    case "NINE" :
+                        setSize = 9;
+                        break;
+                    case "TEN" :
+                        setSize = 10;
+                        break;
+                }
+            }
+
+            var countDown = parseInt(newRow.Code);
+            var copy;
+            var copies = [];
+            for(j=0; j<setSize; j++)
+            {
+                copy = {};
+                for(prop in newRow)
+                {
+                    copy[prop] = newRow[prop];
+                }
+                copy.Code = countDown-j-1; // code
+                copy.ProductCode = copy.Code + copy.Product; // productcode
+                copy.Description = seriesName + " - Volume " + (setSize-j);
+                
+                /*
+                var temp = copy[obj.FlipColumns[0]];
+                copy[obj.FlipColumns[0]] = copy[obj.FlipColumns[1]];
+                copy[obj.FlipColumns[1]] = temp;
+                obj.OutputData.push(copy);
+                */
+                
+                inCollection.push(copy);
+            }
+            return true;
+        }
+        
+        inCollection.push(newRow);
+        return false;
+    }
+    
+    /*
+    var temp = newRow[obj.FlipColumns[0]];
+    newRow[obj.FlipColumns[0]] = newRow[obj.FlipColumns[1]];
+    newRow[obj.FlipColumns[1]] = temp;
+    */
+}
+
 App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exceptions)
 {
     return function(inRow)
@@ -302,7 +412,7 @@ App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exc
                     return;
                 }
             }
-            Collections.MP3CD.push(row);
+            Expand(row, Collections.MP3CD);
             return;
         }
         
@@ -369,8 +479,19 @@ App.controller("Controller", ["$scope", "Rows", "Collections", "Catalogue", func
     };
     
     $scope.Done = false;
-    $scope.Ship = [Collections.Book, Collections.CD, Collections.MP3CDSpecial, Collections.USB, Collections.Misc];
-    $scope.Make = [Collections.CD4, Collections.DVD4, Collections.MCD, Collections.MP3CD];
+    $scope.Ship = {
+        'Books':Collections.Book,
+        'CDs':Collections.CD,
+        'MP3CDs':Collections.MP3CDSpecial,
+        'USBs':Collections.USB,
+        'Misc':Collections.Misc
+    };
+    $scope.Make = {
+        'CDs':Collections.CD4,
+        'DVDs':Collections.DVD4,
+        'MCDs':Collections.MCD,
+        'MP3CDs':Collections.MP3CD
+    };
     
 }]);    
         </script>
