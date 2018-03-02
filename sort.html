@@ -76,27 +76,29 @@
     </head>
     <body>
         <div ng-app="App" ng-controller="Controller" ng-cloak>
-            <form ng-hide="(Parser.OutputShip.length + Parser.OutputMake.length) > 0" ng-submit="Convert();">
+            <form ng-hide="Done">
                 <label>Upload/drag-and-drop CSV:</label>
                 <input type="file" data-import-csv class="form-control">
                 <label>Pase from Excel:</label>
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
+                <img src="http://thecatapi.com/api/images/get?format=src&type=jpg">
             </form>
             
-            <table ng-repeat="Product in Ship track by $index">
+            <table ng-show="Done" ng-repeat="(Key, Product) in Ship">
                 <tr>
-                    <td ng-bind="Count(Product);">
-                        
-                    </td>
+                    <td ng-bind="Count(Product);"></td>
                 </tr>
                 <tr ng-repeat="Row in Product track by $index">
-                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                    <td ng-repeat="Cell in Row track by $index" ng-bind="Cell"></td>
                 </tr>
             </table>
             
-            <table ng-repeat="Product in Make track by $index">
+            <table ng-show="Done" ng-repeat="(Key, Product) in Make">
+                <tr>
+                    <td ng-bind="Count(Product);"></td>
+                </tr>
                 <tr ng-repeat="Row in Product track by $index">
-                    <td ng-repeat="Cell in Row track by $index">{[{Cell}]}</td>
+                    <td ng-repeat="Cell in Row track by $index" ng-bind="Cell"></td>
                 </tr>
             </table>
             
@@ -132,19 +134,32 @@ App.directive("importCsv", ["Rows", function(Rows)
             if(inEvent){
                 inEvent.preventDefault();
             }
-            Rows(event.dataTransfer.files[0]);
+            parse(event.dataTransfer.files[0]);
             return false;
         }
         
         function handlerChange(inEvent){
             inEvent.stopImmediatePropagation();
-            Rows(inEvent.target.files[0]);
-        };
+            parse(inEvent.target.files[0]);
+        }
         
-        function handlerLeave(){
+        
+        function handlerLeave()
+        {
             inElement.removeClass("Import");
         }
         
+        function parse(inFile)
+        {
+            Papa.parse(inFile, {
+                complete: function(inCSV)
+                {
+                    Rows(inCSV.data);
+                    inScope.$apply();
+                }
+            });
+        }
+
         
         inElement.on("dragenter dragstart dragend dragleave dragover drag drop", function (inEvent) {inEvent.preventDefault();});
         inElement.on('dragenter', handlerEnter);
@@ -322,28 +337,20 @@ App.factory("Rows", ["Catalogue", "Collections", function(Catalogue, Collections
             }
         }
         
-        rows = Papa.parse(inData, {
-            complete: function(inCSV)
-            {
-                cut(inCSV.data);
-                for(i=0; i<inCSV.data.length; i++)
-                {
-                    Catalogue(inCSV.data[i]);
-                }
-                Collections.Update();
-                
-            }
-        });
+        cut(inData);
+        for(i=0; i<inData.length; i++)
+        {
+            Catalogue(inData[i]);
+        }
+        Collections.Update();
+        
     }
 }]);
-App.controller("Controller", ["$scope", "Collections", function($scope, Collections)
+App.controller("Controller", ["$scope", "Rows", "Collections", "Catalogue", function($scope, Rows, Collections, Catalogue)
 {
     Collections.Update = function(){
-        console.log("update called no apply");
-        $scope.$apply();
-
+        $scope.Done = true;
     };
-    
     $scope.Count = function(inTable)
     {
         var i;
@@ -354,6 +361,14 @@ App.controller("Controller", ["$scope", "Collections", function($scope, Collecti
         }
         return sum;
     };
+    
+    $scope.Paste = "";
+    $scope.Convert = function()
+    {
+        Rows(Papa.parse($scope.Paste).data);
+    };
+    
+    $scope.Done = false;
     $scope.Ship = [Collections.Book, Collections.CD, Collections.MP3CDSpecial, Collections.USB, Collections.Misc];
     $scope.Make = [Collections.CD4, Collections.DVD4, Collections.MCD, Collections.MP3CD];
     
