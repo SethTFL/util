@@ -91,7 +91,7 @@
             <form ng-hide="Done">
                 <label>Upload/drag-and-drop CSV:</label>
                 <input type="file" data-import-csv class="form-control">
-                <label>Pase from Excel:</label>
+                <label>Paste from clipboard:</label>
                 <textarea ng-model="Paste" ng-change="Convert();"></textarea>
             </form>
             
@@ -280,6 +280,7 @@ App.factory("Collections", ["Sort", "Collection", function(Sort, Collection)
     obj.All = [
         Collection("Book", Sort.PivotDescription),
         Collection("CD", Sort.PivotDescription),
+        Collection("CVD", Sort.PivotDescription),
         Collection("MP3CD", Sort.PivotDescription),
         Collection("USB", Sort.PivotDescription),
         Collection("Misc", Sort.PivotDescription),
@@ -292,15 +293,16 @@ App.factory("Collections", ["Sort", "Collection", function(Sort, Collection)
     obj.Ship = {
         Book:obj.All[0],
         CD:obj.All[1],
-        MP3CD:obj.All[2],
-        USB:obj.All[3],
-        Misc:obj.All[4]
+        DVD:obj.All[2],
+        MP3CD:obj.All[3],
+        USB:obj.All[4],
+        Misc:obj.All[5]
     };
     obj.Make = {
-        CD:obj.All[5],
-        DVD:obj.All[6],
-        MCD:obj.All[7],
-        MP3CD:obj.All[8] 
+        CD:obj.All[6],
+        DVD:obj.All[7],
+        MCD:obj.All[8],
+        MP3CD:obj.All[9] 
     };
     
     obj.Done = function(){};
