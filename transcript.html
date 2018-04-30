@@ -1,0 +1,154 @@
+---
+---
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <div style="max-width:700px; margin:0 auto;">
+            <textarea class="Stage One" style="width:100%; min-height:300px; white-space:nowrap;"></textarea>
+            <button class="Transfer DOM">Transfer ↓</button>
+            <button class="Transfer HTML">Transfer ↑</button>
+            <button class="Control Titles">Convert P+Strong to H2</button>
+            <button class="Control Footnotes">Re-link Footnotes</button>
+            <button class="Control Quote">Quote Selected</button>
+            <button class="Control Songify" onclick="Songify()">Songify</button>
+            <div class="Stage Two" style="max-height:600px; overflow-y:scroll;"></div>
+        </div>
+        <script>
+var StageOne = document.querySelector(".Stage.One");
+var StageTwo = document.querySelector(".Stage.Two");
+var TransferDOM = document.querySelector(".Transfer.DOM");
+var TransferHTML = document.querySelector(".Transfer.HTML");
+var ControlTitles = document.querySelector(".Control.Titles");
+var ControlFootnotes = document.querySelector(".Control.Footnotes");
+var ControlQuote = document.querySelector(".Control.Quote");
+
+TransferDOM.addEventListener("click", function(inEvent){
+    StageTwo.innerHTML = StageOne.value;
+});
+TransferHTML.addEventListener("click", function(inEvent){
+    StageOne.value = StageTwo.innerHTML;
+});
+ControlTitles.addEventListener("click", function(inEvent){
+    FixTitles();
+});
+ControlFootnotes.addEventListener("click", function(inEvent){
+    FixFootnotes();
+});
+ControlQuote.addEventListener("click", function(inEvent){
+    Quote();
+});
+
+function SiblingsBetween(inElement1, inElment2)
+{
+    var el;
+    var list;
+    el = inElement1;
+    list = [el];
+    while(el = el.previousSibling)
+    {
+        list.push(el);
+        if(el == inElment2)
+        {
+            return list.reverse();
+        }
+    }
+    el = inElement1;
+    list = [el];
+    while(el = el.nextSibling)
+    {
+        list.push(el);
+        if(el == inElment2)
+        {
+            return list;
+        }
+    }
+}
+function Songify()
+{
+    var replacement = document.createElement("blockquote");
+    var selection = window.getSelection();
+    var start = selection.anchorNode.parentNode.closest("p");
+    var stop = selection.focusNode.parentNode.closest("p");
+    var between = SiblingsBetween(start, stop);
+    var text = "";
+    var parent = start.parentNode;
+    parent.insertBefore(replacement, start);
+
+    var i;
+    for(i=0; i<between.length; i++)
+    {
+        if(between[i].innerHTML)
+        {
+            text += between[i].innerHTML + "<br/>";
+        }
+        parent.removeChild(between[i]);
+    }
+
+    replacement.innerHTML = text;
+
+    return replacement;
+}
+
+function Quote()
+{
+    var selection = window.getSelection();
+    var quote = document.createElement("h6");
+    quote.innerHTML = selection.toString();
+    var container = selection.anchorNode.parentElement;
+    container.parentNode.insertBefore(quote, container);
+}
+
+function Iterate(inSelector, inProcessor)
+{
+    var i;
+    var elements;
+    elements = document.querySelectorAll(inSelector);
+    for(i=0; i<elements.length; i++)
+    {
+        inProcessor(elements[i]);
+    } 
+}
+function FixTitles()
+{
+    function ProcessParagraph(inElement)
+    {
+        var prefix = "<strong>";
+        var suffix = "</strong>";
+        var replacement;
+        if(inElement.innerHTML.substring(0, prefix.length) == prefix)
+        {
+            if(inElement.innerHTML.substring(inElement.innerHTML.length - suffix.length) == suffix)
+            {
+                console.log("title:", inElement.innerHTML);
+                replacement = document.createElement("h2");
+                replacement.innerHTML = inElement.innerText;
+                inElement.parentNode.replaceChild(replacement, inElement);
+            }
+        }
+    }
+
+    Iterate("p", ProcessParagraph);
+}
+function FixFootnotes()
+{
+    function ProcessCopy(inElement)
+    {
+        inElement.setAttribute("href", "#"+ (inElement.testContent || inElement.innerText));
+    }
+    function ProcessFooter(inElement)
+    {
+        inElement.setAttribute("name", inElement.testContent || inElement.innerText);
+        inElement.removeAttribute("href");
+    }
+
+    Iterate("a[href*='#_ftnref']", ProcessFooter);
+    Iterate("a[href*='#_ftn']", ProcessCopy)
+    Iterate("a[href*='#_msoanchor']", ProcessFooter);
+    Iterate("a[href*='#_msocom']", ProcessCopy);
+}
+        </script>
+    </body>
+</html>
