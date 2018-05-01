@@ -27,21 +27,20 @@
                 <button onclick="ToHTML()">← Transfer</button>
                 <button onclick="FixTitles()">Convert P+Strong to H2</button>
                 <button onclick="FixFootnotes()">Re-link Footnotes</button>
-                <button onclick="QuoteBlock()">Create Block Quote</button>
+                <button onclick="QuoteBlockCreate()">Create Block Quote</button>
                 <button onclick="QuoteBlockRemove()">Remove Block Quote</button>
+                <button onclick="QuotePullCreate()">Create Pull Quote</button>
                 <button onclick="QuotePullRemove()">Remove Pull Quote</button>
-                <button onclick="QuotePull()">Create Pull Quote</button>
-                
                 <button onclick="console.log(DOMSelection())">Trace Selection</button>
-
             </dd>
             <dd>
-                <div class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
+                <div onmouseup="SelectionCreate()" class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
             </dd>
         </dl>
         <script>
 var StageHTML = document.querySelector(".Editor.HTML .Stage");
 var StageDOM = document.querySelector(".Editor.DOM .Stage");
+var Selection = [];
 //// utility functions ///////////////////////
 function Iterate(inSelector, inProcessor)
 {
@@ -126,7 +125,7 @@ function ToDOM()
 {
     StageDOM.innerHTML = StageHTML.value;
 }
-function QuoteBlock()
+function QuoteBlockCreate()
 {
     var replacement;
     var between;
@@ -167,7 +166,7 @@ function QuoteBlockRemove()
         StageDOM.removeChild(block);
     }
 }
-function QuotePull()
+function QuotePullCreate()
 {
     var selection, quote;
     selection = DOMSelection();
@@ -226,6 +225,29 @@ function FixFootnotes()
     Iterate("a[href*='#_ftn']", ProcessCopy)
     Iterate("a[href*='#_msoanchor']", ProcessFooter);
     Iterate("a[href*='#_msocom']", ProcessCopy);
+}
+function SelectionCreate()
+{
+    SelectionRemove();
+    
+    var selection = DOMSelection();
+    if(!selection.Across)
+        return;
+    
+    Selection = selection.Across;
+    for(i=0; i<Selection.length; i++)
+    {
+        if(Selection[i].style)
+            Selection[i].style.border = "2px dotted #FA0";
+    }
+}
+function SelectionRemove()
+{
+    for(i=0; i<Selection.length; i++)
+    {
+        if(Selection[i] && Selection[i].style)
+            Selection[i].removeAttribute("style");
+    }
 }
         </script>
     </body>
