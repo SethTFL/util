@@ -3,104 +3,46 @@
 <!DOCTYPE html>
 <html>
     <head>
-
+        <style>
+            .Editor
+            {
+                width:50%;
+                float:left;
+            }
+        </style>
     </head>
     <body>
-        <div style="max-width:700px; margin:0 auto;">
-            <textarea class="Stage One" style="width:100%; min-height:300px; white-space:nowrap;"></textarea>
-            <button class="Transfer DOM">Transfer ↓</button>
-            <button class="Transfer HTML">Transfer ↑</button>
-            <button class="Control Titles">Convert P+Strong to H2</button>
-            <button class="Control Footnotes">Re-link Footnotes</button>
-            <button class="Control Quote">Quote Selected</button>
-            <button class="Control Songify" onclick="Songify()">Songify</button>
-            <div class="Stage Two" style="max-height:600px; overflow-y:scroll;"></div>
-        </div>
+        <dl class="Editor HTML">
+            <dt>HTML Editor</dt>
+            <dd>
+                <button class="Transfer DOM" onclick="ToDOM()">Transfer →</button>
+            </dd>
+            <dd>
+                <textarea class="Stage" style="width:100%; min-height:300px; white-space:nowrap;"></textarea>
+            </dd>
+        </dl>
+        <dl class="Editor DOM">
+            <dt>DOM Editor</dt>
+            <dd>
+                <button onclick="ToHTML()">← Transfer</button>
+                <button onclick="FixTitles()">Convert P+Strong to H2</button>
+                <button onclick="FixFootnotes()">Re-link Footnotes</button>
+                <button onclick="QuoteBlock()">Create Block Quote</button>
+                <button onclick="QuoteBlockRemove()">Remove Block Quote</button>
+                <button onclick="QuotePullRemove()">Remove Pull Quote</button>
+                <button onclick="QuotePull()">Create Pull Quote</button>
+                
+                <button onclick="console.log(DOMSelection())">Trace Selection</button>
+
+            </dd>
+            <dd>
+                <div class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
+            </dd>
+        </dl>
         <script>
-var StageOne = document.querySelector(".Stage.One");
-var StageTwo = document.querySelector(".Stage.Two");
-var TransferDOM = document.querySelector(".Transfer.DOM");
-var TransferHTML = document.querySelector(".Transfer.HTML");
-var ControlTitles = document.querySelector(".Control.Titles");
-var ControlFootnotes = document.querySelector(".Control.Footnotes");
-var ControlQuote = document.querySelector(".Control.Quote");
-
-TransferDOM.addEventListener("click", function(inEvent){
-    StageTwo.innerHTML = StageOne.value;
-});
-TransferHTML.addEventListener("click", function(inEvent){
-    StageOne.value = StageTwo.innerHTML;
-});
-ControlTitles.addEventListener("click", function(inEvent){
-    FixTitles();
-});
-ControlFootnotes.addEventListener("click", function(inEvent){
-    FixFootnotes();
-});
-ControlQuote.addEventListener("click", function(inEvent){
-    Quote();
-});
-
-function SiblingsBetween(inElement1, inElment2)
-{
-    var el;
-    var list;
-    el = inElement1;
-    list = [el];
-    while(el = el.previousSibling)
-    {
-        list.push(el);
-        if(el == inElment2)
-        {
-            return list.reverse();
-        }
-    }
-    el = inElement1;
-    list = [el];
-    while(el = el.nextSibling)
-    {
-        list.push(el);
-        if(el == inElment2)
-        {
-            return list;
-        }
-    }
-}
-function Songify()
-{
-    var replacement = document.createElement("blockquote");
-    var selection = window.getSelection();
-    var start = selection.anchorNode.parentNode.closest("p");
-    var stop = selection.focusNode.parentNode.closest("p");
-    var between = SiblingsBetween(start, stop);
-    var text = "";
-    var parent = start.parentNode;
-    parent.insertBefore(replacement, start);
-
-    var i;
-    for(i=0; i<between.length; i++)
-    {
-        if(between[i].innerHTML)
-        {
-            text += between[i].innerHTML + "<br/>";
-        }
-        parent.removeChild(between[i]);
-    }
-
-    replacement.innerHTML = text;
-
-    return replacement;
-}
-
-function Quote()
-{
-    var selection = window.getSelection();
-    var quote = document.createElement("h6");
-    quote.innerHTML = selection.toString();
-    var container = selection.anchorNode.parentElement;
-    container.parentNode.insertBefore(quote, container);
-}
-
+var StageHTML = document.querySelector(".Editor.HTML .Stage");
+var StageDOM = document.querySelector(".Editor.DOM .Stage");
+//// utility functions ///////////////////////
 function Iterate(inSelector, inProcessor)
 {
     var i;
@@ -110,6 +52,142 @@ function Iterate(inSelector, inProcessor)
     {
         inProcessor(elements[i]);
     } 
+}
+function DOMSelection()
+{
+    var selection;
+    var pathStart, pathStop, pathBetween;
+    var output;
+
+    selection = window.getSelection();
+    output = {
+          Text: selection.toString(),
+            Up: FindStrand(selection.anchorNode, StageDOM),
+          Down: FindStrand(selection.focusNode, StageDOM),
+    };
+    output.Across = FindBetween(output.Up[0], output.Down[0])
+
+    return output;
+}
+function FindStrand(inElement, inRoot)
+{
+    var list = [inElement];
+    while(inElement = inElement.parentNode)
+    {
+        if(inElement == inRoot)
+            return list.reverse();
+        
+        list.push(inElement);
+    }
+    return false;
+}
+function FindBefore(inElement1, inElement2)
+{
+    var list;
+    list = [inElement1];
+    if(inElement1 == inElement2)
+    {
+        return list;
+    }
+    while(inElement1 = inElement1.nextSibling)
+    {
+        list.push(inElement1);
+        if(inElement1 == inElement2)
+        {
+            return list;
+        }
+    }
+    return false;
+}
+function FindBetween(inElement1, inElement2)
+{
+    var before;
+
+    before = FindBefore(inElement1, inElement2);
+    if(before)
+    {
+        return before;
+    }
+
+    before = FindBefore(inElement2, inElement1);
+    if(before)
+    {
+        return before;
+    }
+
+    return false;
+}
+//// commands ////////////////////////////////
+function ToHTML()
+{
+    StageHTML.value = StageDOM.innerHTML;
+}
+function ToDOM()
+{
+    StageDOM.innerHTML = StageHTML.value;
+}
+function QuoteBlock()
+{
+    var replacement;
+    var between;
+    var text;
+    var i;
+
+    replacement = document.createElement("blockquote");
+    between = DOMSelection().Across;
+    if(!between)
+        return false;
+
+    text = "";
+    StageDOM.insertBefore(replacement, between[0]);
+
+    for(i=0; i<between.length; i++)
+    {
+        if(between[i].innerHTML)
+        {
+            text += between[i].innerHTML + "<br/>";
+        }
+        StageDOM.removeChild(between[i]);
+    }
+    replacement.innerHTML = text;
+    return replacement;
+}
+function QuoteBlockRemove()
+{
+    var selection = DOMSelection();
+    var block;
+    var text;
+    if(!selection.Across)
+        return;
+    var block = selection.Across[0]
+    if(block.nodeName.toUpperCase() == "BLOCKQUOTE")
+    {
+        text = "<p>" + block.innerHTML.split("<br>").join("</p><p>") + "</p>";
+        block.insertAdjacentHTML("beforeBegin", text);
+        StageDOM.removeChild(block);
+    }
+}
+function QuotePull()
+{
+    var selection, quote;
+    selection = DOMSelection();
+    if(!selection.Across)
+    {
+        return;
+    }
+    quote = document.createElement("h6");
+    quote.innerHTML = selection.Text;
+    StageDOM.insertBefore(quote, selection.Across[0]);
+}
+function QuotePullRemove()
+{
+    var selection = DOMSelection();
+    if(!selection.Across)
+        return;
+    if(selection.Across[0].nodeName.toUpperCase() == "H6")
+    {
+        StageDOM.removeChild(selection.Across[0]);
+    }
 }
 function FixTitles()
 {
