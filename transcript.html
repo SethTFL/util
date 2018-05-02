@@ -4,19 +4,38 @@
 <html>
     <head>
         <style>
+            body
+            {
+                font-family:monospace;
+            }
             .Editor
             {
-                width:50%;
-                float:left;
+                max-width: 960px;
+                margin:0 auto;
+            }
+            dd
+            {
+                margin:0;
+                padding:5px;
             }
             .Stage
             {
-                background:#eee;
+                max-width:90%;
+                min-height:200px;
                 border:1px solid #ddd;
                 padding:8px;
+                background:#eee;
                 color:#333;
                 font-size:12px;
                 font-family:monospace;
+            }
+            .Stage ::selection
+            {
+                background:#FC0;
+            }
+            .Stage .Selection
+            {
+                border:1px solid #F30;
             }
             fieldset
             {
@@ -32,20 +51,27 @@
             {
                 text-align:right;
             }
+            h6
+            {
+                font-size: 100%;
+                font-style: italic;
+            }
         </style>
     </head>
-    <body>
+    <body onload="ToHTML()">
         <dl class="Editor HTML">
             <dt>HTML String Editor</dt>
             <dd>
+                <button onclick="FixNewlines()">Remove Empty Lines</button>
+                &nbsp;
                 <input type="text" class="FAR Find"/>
-                <button onclick="FAR()">Becomes ⇝</button>
+                <button onclick="FixCustom()">Becomes ⇝</button>
                 <input type="text" class="FAR Replace"/>
                 &nbsp;
                 <button class="Transfer DOM" onclick="ToDOM()">Convert to DOM Objects →</button>
             </dd>
             <dd>
-                <textarea class="Stage" style="width:100%; min-height:300px; white-space:nowrap;"></textarea>
+                <textarea class="Stage" style="width:100%; white-space:nowrap;"></textarea>
             </dd>
         </dl>
         <dl class="Editor DOM">
@@ -54,6 +80,8 @@
                 <button onclick="ToHTML()">← Convert to HTML string</button>
                 <button onclick="FixTitles()">Convert P+Strong to H2</button>
                 <button onclick="FixFootnotes()">Re-link Footnotes</button>
+            </dd>
+            <dd>
                 <button onclick="QuoteBlockCreate()">Block Quote</button>
                 <button onclick="QuoteBlockRemove()">Remove Block Quote</button>
                 <button onclick="QuotePullCreate()">Pull Quote</button>
@@ -64,6 +92,8 @@
             </dd>
         </dl>
         <script>
+var PanelHTML = document.querySelector(".Editor.HTML");
+var PanelDOM = document.querySelector(".Editor.DOM");
 var StageHTML = document.querySelector(".Editor.HTML .Stage");
 var StageDOM = document.querySelector(".Editor.DOM .Stage");
 var FARFind = document.querySelector(".FAR.Find");
@@ -158,16 +188,23 @@ function FindBetween(inElement1, inElement2)
 function ToHTML()
 {
     SelectionRemove();
-    StageHTML.value = StageDOM.innerHTML;
+    var text = "";
+    var str;
+    var i;
+    for(i=0; i<StageDOM.childNodes.length; i++)
+    {
+        text += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
+    }
+    StageHTML.value = text;
+    PanelHTML.style.display = "block";
+    PanelDOM.style.display = "none";
 }
 function ToDOM()
 {
     SelectionRemove();
     StageDOM.innerHTML = StageHTML.value;
-}
-function FAR()
-{
-    StageHTML.value = StageHTML.value.split(FARFind.value).join(FARReplace.value);
+    PanelHTML.style.display = "none";
+    PanelDOM.style.display = "block";
 }
 function QuoteBlockCreate()
 {
@@ -177,7 +214,7 @@ function QuoteBlockCreate()
     var i;
 
     replacement = document.createElement("blockquote");
-    if(Selection.length == 0)
+    if(Selection.length == 0 || Selection[0].nodeName == "BLOCKQUOTE")
         return false;
 
     text = "";
@@ -267,6 +304,14 @@ function FixFootnotes()
     Iterate("a[href*='#_msoanchor']", ProcessFooter);
     Iterate("a[href*='#_msocom']", ProcessCopy);
 }
+function FixNewlines()
+{
+    StageHTML.value = StageHTML.value.replace(/^\s*$(?:\r\n?|\n)/gm, "");
+}
+function FixCustom()
+{
+    StageHTML.value = StageHTML.value.split(FARFind.value).join(FARReplace.value);
+}
 function SelectionCreate()
 {
     SelectionRemove();
@@ -277,7 +322,7 @@ function SelectionCreate()
         Selection = selection.Across;
         for(i=0; i<Selection.length; i++)
         {
-            Selection[i].style.border = "2px dotted #FA0";
+            Selection[i].className="Selection"
         }
         return true;
     }
@@ -287,7 +332,7 @@ function SelectionRemove()
 {
     for(i=0; i<Selection.length; i++)
     {
-        Selection[i].removeAttribute("style");
+        Selection[i].removeAttribute("class");
     }
 }
         </script>
