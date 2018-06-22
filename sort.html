@@ -151,6 +151,7 @@
                     <td class="Extra GS" ng-bind="Row.GS"></td>
                 </tr>
             </table>
+            
             <table class="Make" ng-show="Done">
                 <tr>
                     <th><strong>MP3CDs and CDs</strong>: <em ng-bind="Make.MP3CD.Count + Make.CD.Count;"></em></th>
@@ -277,6 +278,29 @@ App.factory("Collection", [function()
         {
             col.Rows.sort(col.Sort);
         };
+        col.Bin = function()
+        {
+            var i, j;
+            var current;
+            var check;
+            for(i=0; i<col.Rows.length; i++)
+            {
+                if(i<col.Rows.length-1)
+                {
+                    current = col.Rows[i];
+                    for(j=i+1; j<col.Rows.length; j++)
+                    {
+                        check = col.Rows[j];
+                        if(check.ProductCode == current.ProductCode)
+                        {
+                            col.Rows.splice(j, 1);
+                            current.Count += check.Count;
+                        }
+                    }
+                }
+            }
+        };
+
         return col;
     }
 }]);
@@ -311,7 +335,7 @@ App.factory("Collections", ["Sort", "Collection", function(Sort, Collection)
         MCD:obj.All[8],
         MP3CD:obj.All[9] 
     };
-    
+
     obj.Done = function(){};
     obj.Sort = function()
     {
@@ -320,6 +344,7 @@ App.factory("Collections", ["Sort", "Collection", function(Sort, Collection)
         {
             obj.All[i].Update();
         }
+        obj.Make.MP3CD.Bin();
     };
     
     return obj;
@@ -329,6 +354,7 @@ App.factory("Exceptions", [function()
     return [15905, 14609, 14109, 14212];
 }]);
 
+// given a row, put it in the right collection
 App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exceptions)
 {
     return function(inRow)
@@ -440,7 +466,7 @@ App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exc
         };
         
         // check for prefixes
-        // remove gs prefix
+        // remove gs prefix ("Guest Speaker")
         var gsClip = row.ProductCode;
         var firstTwo = gsClip.substring(0, 2);
         if(firstTwo == "GS")
@@ -533,6 +559,8 @@ App.factory("Catalogue", ["Collections", "Exceptions", function(Collections, Exc
         }
     };
 }]);
+
+// given raw data, find the header and its columns
 App.factory("Rows", ["Catalogue", "Collections", function(Catalogue, Collections)
 {
     return function(inData)
@@ -566,6 +594,7 @@ App.factory("Rows", ["Catalogue", "Collections", function(Catalogue, Collections
         Collections.Done();
     }
 }]);
+
 App.controller("Controller", ["$scope", "Rows", "Collections", function($scope, Rows, Collections)
 {
     Collections.Done = function()
