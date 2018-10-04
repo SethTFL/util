@@ -86,6 +86,7 @@
                 <button onclick="QuoteBlockRemove()">Remove Block Quote</button>
                 <button onclick="QuotePullCreate()">Pull Quote</button>
                 <button onclick="QuotePullRemove()">Remove Pull Quote</button>
+                <button onclick="FootnoteRemove()">Remove footnote</button>
             </dd>
             <dd>
                 <div onmouseup="SelectionCreate()" class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
@@ -266,6 +267,20 @@ function QuotePullRemove()
     {
         StageDOM.removeChild(selection.Across[0]);
     }
+}
+function FootnoteRemove()
+{
+    var selection = DOMSelection();
+    if(!selection.Across)
+        return;
+
+    var p = selection.Across[0];
+    var a = p.querySelector("a");
+    var name = a.getAttribute("name");
+    var otherA = document.querySelector("a[href='#"+name+"']");
+    
+    otherA.parentNode.removeChild(otherA);
+    p.parentNode.removeChild(p);
 }
 function FixTitles()
 {
