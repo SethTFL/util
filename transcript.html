@@ -248,14 +248,20 @@ function QuoteBlockRemove()
 }
 function QuotePullCreate()
 {
-    var selection, quote;
+    var selection, quote, string;
     selection = DOMSelection();
     if(!selection.Across)
     {
         return;
     }
     quote = document.createElement("h6");
-    quote.innerHTML = selection.Text;
+    string = selection.Text;
+    string = string.charAt(0).toUpperCase() + string.slice(1);
+    if(string[string.length-1] != ".")
+    {
+        string = string.concat(".");
+    }
+    quote.innerHTML = string;
     StageDOM.insertBefore(quote, selection.Across[0]);
 }
 function QuotePullRemove()
