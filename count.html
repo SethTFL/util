@@ -6,11 +6,6 @@
         <script src="papaparse.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
         <style>
-            input[data-import-csv]
-            {
-                padding:0.2rem;
-                background:#ddd;
-            }
             dt
             {
                 font-weight:bold;
@@ -26,38 +21,78 @@
         </style>
     </head>
     <body>
-        <p>
-            <a target="_blank" href="https://www.truthforlife.org/admin/shop/order/export/">Get CSV from TFL Admin</a>
-        </p>
         <div ng-app="App" ng-controller="Controller">
-            <div class="input-group">
-                <input type="file" data-import-csv class="form-control">
+            <div style="width:30%; float:left;">
+                <h2>Donation Products</h2>
+                <ol ng-if="!StatusDonate.Completed">
+                    <li>
+                        <strong>Download CSV:</strong>
+                        <a target="_blank" href="https://truthforlife.org/admin/donations/donation/export/">Donation Exports</a>
+                    </li>
+                    <li>
+                        <strong>Upload CSV:</strong>
+                        <input type="file" data-import-donate-csv class="form-control">
+                    </li>
+                </ol>
+                <div ng-if="StatusDonate.Completed">
+                    <dl ng-repeat="Code in StatusDonate.Codes track by $index">
+                        <dt>
+                            <span ng-bind="Code.ID"></span> / <span ng-bind="Code.Name"></span>
+                        </dt>
+                        <dd><span ng-bind="Code.Count"></span></dd>
+                    </dl>
+                    <dl>
+                        <dt>
+                            <span>Total</span>
+                        </dt>
+                        <dd><span ng-bind="StatusDonate.Total"></span></dd>
+                    </dl>
+                </div>
             </div>
-            <dl ng-repeat="Code in Parsed.Codes track by $index">
-                <dt>
-                    <span ng-bind="Code.ID"></span> / <span ng-bind="Code.Name"></span>
-                </dt>
-                <dd><span ng-bind="Code.Count"></span></dd>
-            </dl>
-            <dl>
-                <dt>
-                    <span>Total</span>
-                </dt>
-                <dd><span ng-bind="Parsed.Total"></span></dd>
-            </dl>
+            <div style="width:30%; float:left;">
+                <h2>Store Orders</h2>
+                <ol ng-if="!StatusStore.Completed">
+                    <li>
+                        <strong>Download CSV:</strong>
+                        <a target="_blank" href="https://truthforlife.org/admin/shop/order/export/">Store Exports</a>
+                    </li>
+                    <li>
+                        <strong>Upload CSV:</strong>
+                        <input type="file" data-import-store-csv class="form-control">
+                    </li>
+                </ol>
+                <div ng-if="StatusStore.Completed">
+                    <dl ng-repeat="Code in StatusStore.Codes track by $index">
+                        <dt>
+                            <span ng-bind="Code.ID"></span> / <span ng-bind="Code.Name"></span>
+                        </dt>
+                        <dd><span ng-bind="Code.Count"></span></dd>
+                    </dl>
+                    <dl>
+                        <dt>
+                            <span>Total</span>
+                        </dt>
+                        <dd><span ng-bind="StatusStore.Total"></span></dd>
+                    </dl>
+                </div>
+            </div>
+            <div style="width:30%; float:left;">
+                <h2>Store and Donate totals</h2>
+                <dl>
+                    <dt>
+                        <span>Grand Total</span>
+                    </dt>
+                    <dd><span ng-bind="StatusStore.Total + StatusDonate.Total"></span></dd>
+                </dl>
+            </div>
         </div>
 
         <script>
-var App;
-App = angular.module("App", []).config(["$interpolateProvider", function(inInterpolate){
-    //inInterpolate.startSymbol('{[{').endSymbol('}]}');
-}]);
-App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, FactoryParser){
-
+var DirectiveFunction = function(inParser)
+{
     var directive = {};
-
-    directive.link = function(inScope, inElement, inAttributes){
-
+    directive.link = function(inScope, inElement, inAttributes)
+    {
         function handlerEnter(inEvent){
             if(inEvent){
                 inEvent.preventDefault();
@@ -82,30 +117,30 @@ App.directive("importCsv", ["$parse", "FactoryParser", function(inParser, Factor
         };
         
         function parse(inFile){
-            FactoryParser.Parse(inFile, inScope.$apply);
+            inParser.Parse(inFile, function(){
+                inScope.$apply();
+            });
         }
         
         function handlerLeave(){
             inElement.removeClass("Import");
         }
         
-        
-        
         inElement.on("dragenter dragstart dragend dragleave dragover drag drop", function (inEvent) {inEvent.preventDefault();});
         inElement.on('dragenter', handlerEnter);
         inElement.on('dragleave', handlerLeave);
         inElement.on('drop', handlerDrop);
         inElement.on('change', handlerChange);
-        inElement.on('click', function(inEvent){
-            inEvent.stopImmediatePropagation();
-            
-        })
+        inElement.on('click', function(inEvent){inEvent.stopImmediatePropagation();});
     };
-    
     return directive;
-    
-}]);
-App.factory("FactoryParser", [function()
+};
+
+var App;
+App = angular.module("App", []);
+App.directive("importStoreCsv", ["ParseStore", DirectiveFunction]);
+App.directive("importDonateCsv", ["ParseDonate", DirectiveFunction]);
+App.factory("ParseStore", [function()
 {
     var obj = {};
     obj.Fields = {
@@ -113,36 +148,17 @@ App.factory("FactoryParser", [function()
         Quantity:[]
     };
     obj.Codes = [{
-        ID:"30049",
-        Name:"LeatherTouch",
+        ID:"32283",
+        Name:"Prepare Him Room",
         Count:0
     },
     {
-        ID:"30050",
-        Name:"Hardcover",
-        Count:0
-    },
-    {
-        ID:"30048",
-        Name:"Black Leather (non-indexed)",
-        Count:0
-    },
-    {
-        ID:"30047",
-        Name:"Black Leather (indexed)",
+        ID:"32282K",
+        Name:"Prepare Him Room Kit",
         Count:0
     }];
     obj.Total = 0;
-
-    obj.Reset = function()
-    {
-        obj.Total = 0;
-        for(i=0; i<obj.Codes.length; i++)
-        {
-            obj.Codes[i].Count = 0;
-            obj.Codes[i].HasBeenSet = false;
-        } 
-    };
+    obj.Completed = false;
     obj.Parse = function(inData, inHandlerDone)
     {
         Papa.parse(inData, {
@@ -172,10 +188,8 @@ App.factory("FactoryParser", [function()
                         obj.Fields.Quantity.push(i);
                     }
                 }
-
-                // reset the counts (doesnt work for some reason)
-                obj.Reset();
-
+                
+                console.log(obj.Fields);
                 console.log("Rows:", results.data.length);
                 for(i=1; i<results.data.length; i++)
                 {
@@ -202,17 +216,88 @@ App.factory("FactoryParser", [function()
                         }
                     }
                 }
+                obj.Completed = true;
                 inHandlerDone();
-
             }
         });
 
     };
     return obj;
 }]);
-App.controller("Controller", ["$scope", "FactoryParser", function($scope, FactoryParser)
+App.factory("ParseDonate", [function()
 {
-    $scope.Parsed = FactoryParser;
+    var obj = {};
+    obj.FieldIndex;
+    obj.Codes = [{
+        ID:"32283",
+        Name:"Prepare Him Room",
+        Count:0
+    },
+    {
+        ID:"32282K",
+        Name:"Prepare Him Room Kit",
+        Count:0
+    }];
+    obj.Total = 0;
+    obj.Completed = false;
+    obj.Parse = function(inData, inHandlerDone)
+    {
+        Papa.parse(inData, {
+            complete: function(results) {
+                var i, j, k;
+                var row;
+                var cell;
+                var match;
+                var count;
+                var code;
+
+                for(i=0; i<obj.Codes.length; i++)
+                {
+                    console.log("initial count:", obj.Codes[i]);
+                }
+
+                // find the product number column
+                for(i=0; i<results.data[0].length; i++)
+                {
+                    cell = results.data[0][i];
+                    if(cell == "Product Number")
+                    {
+                        obj.FieldIndex = i;
+                        break;
+                    }
+                }
+                
+                console.log(obj.Fields);
+                console.log("Rows:", results.data.length);
+
+                for(i=1; i<results.data.length; i++)
+                {
+                    cell = results.data[i][obj.FieldIndex];
+                    for(j=0; j<obj.Codes.length; j++)
+                    {
+                        code = obj.Codes[j];
+                        // if it has one of the codes we want...
+                        if(code.ID == cell)
+                        {
+                            code.Count++;
+                            obj.Total++;
+                            code.HasBeenSet = true;
+                            break;
+                        }
+                    }
+                }
+                obj.Completed = true;
+                inHandlerDone();
+            }
+        });
+
+    };
+    return obj;
+}]);
+App.controller("Controller", ["$scope", "ParseStore", "ParseDonate", function($scope, ParseStore, ParseDonate)
+{
+    $scope.StatusStore = ParseStore;
+    $scope.StatusDonate = ParseDonate;
 }]);    
         </script>
     </body>
