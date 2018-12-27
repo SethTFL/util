@@ -284,7 +284,12 @@ function FootnoteRemove()
     var a = p.querySelector("a");
     var name = a.getAttribute("name");
     var otherA = document.querySelector("a[href='#"+name+"']");
-    
+    var text = a.parentNode.innerHTML
+
+    quote = document.createElement("h6");
+    quote.innerHTML = text.substring(text.indexOf("“")+1, text.indexOf("”"));
+    StageDOM.insertBefore(quote, otherA.parentNode);
+
     otherA.parentNode.removeChild(otherA);
     p.parentNode.removeChild(p);
 }
