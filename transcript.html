@@ -76,17 +76,20 @@
         </dl>
         <dl class="Editor DOM">
             <dt>DOM Object Editor</dt>
+            <dd>Within Document:</dd>
             <dd>
                 <button onclick="ToHTML()">← Convert to HTML string</button>
                 <button onclick="FixTitles()">Convert P+Strong to H2</button>
                 <button onclick="FixFootnotes()">Re-link Footnotes</button>
             </dd>
+            <dd>Within Selection:</dd>
             <dd>
                 <button onclick="QuoteBlockCreate()">Block Quote</button>
                 <button onclick="QuoteBlockRemove()">Remove Block Quote</button>
                 <button onclick="QuotePullCreate()">Pull Quote</button>
                 <button onclick="QuotePullRemove()">Remove Pull Quote</button>
-                <button onclick="FootnoteRemove()">Remove footnote</button>
+                <button onclick="FootnoteRemove(false)">Remove Footnotes</button>
+                <button onclick="FootnoteRemove(true) ">Remove Footnotes and build Pull Quotes</button>
             </dd>
             <dd>
                 <div onmouseup="SelectionCreate()" class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
@@ -269,24 +272,43 @@ function QuotePullRemove()
     var selection = DOMSelection();
     if(!selection.Across)
         return;
+
     if(selection.Across[0].nodeName.toUpperCase() == "H6")
     {
         StageDOM.removeChild(selection.Across[0]);
     }
 }
-function FootnoteRemove()
+function FootnoteRemove(andPull)
 {
     var selection = DOMSelection();
+    var i;
     if(!selection.Across)
         return;
 
-    var p = selection.Across[0];
-    var a = p.querySelector("a");
-    var name = a.getAttribute("name");
-    var otherA = document.querySelector("a[href='#"+name+"']");
-    
-    otherA.parentNode.removeChild(otherA);
-    p.parentNode.removeChild(p);
+    for(i=0; i<selection.Across.length; i++)
+    {
+        var p = selection.Across[i];
+        var a = p.querySelector("a");
+        var a = p.querySelector("a");
+        if(!a)
+        {
+            continue;
+        }
+        var name = a.getAttribute("name");
+        var otherA = document.querySelector("a[href='#"+name+"']");
+        
+        if(andPull)
+        {
+            var text = a.parentNode.innerHTML;
+
+            quote = document.createElement("h6");
+            quote.innerHTML = text.substring(text.indexOf("“")+1, text.indexOf("”"));
+            StageDOM.insertBefore(quote, otherA.parentNode);
+        }
+
+        otherA.parentNode.removeChild(otherA);
+        p.parentNode.removeChild(p);
+    }
 }
 function FixTitles()
 {
