@@ -278,6 +278,25 @@ function QuotePullRemove()
         StageDOM.removeChild(selection.Across[0]);
     }
 }
+function QuotePullSpread()
+{
+    var i;
+    var quotes;
+    var quote;
+    var ps;
+    var p;
+
+    quotes = StageDOM.querySelectorAll("h6");
+    for(i=0; i<quotes.length; i++)
+    {
+        quote = quotes[i];
+        quote.parentNode.removeChild(quote);
+    }
+
+    var paddingStart = 2;
+    var paddingEnd = 2;
+    ps = StageDOM.querySelectorAll("p");
+}
 function FootnoteRemove(andPull)
 {
     var selection = DOMSelection();
@@ -288,7 +307,6 @@ function FootnoteRemove(andPull)
     for(i=0; i<selection.Across.length; i++)
     {
         var p = selection.Across[i];
-        var a = p.querySelector("a");
         var a = p.querySelector("a");
         if(!a)
         {
