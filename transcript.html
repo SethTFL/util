@@ -285,6 +285,9 @@ function QuotePullSpread()
     var quote;
     var ps;
     var p;
+    var paddingStart;
+    var paddingEnd;
+    var spacing;
 
     quotes = StageDOM.querySelectorAll("h6");
     for(i=0; i<quotes.length; i++)
@@ -293,9 +296,11 @@ function QuotePullSpread()
         quote.parentNode.removeChild(quote);
     }
 
-    var paddingStart = 2;
-    var paddingEnd = 2;
+    paddingStart = 2;
+    paddingEnd = 2;
     ps = StageDOM.querySelectorAll("p");
+    spacing = Math.floor( (ps.length-(paddingStart+paddingEnd)) / quotes.length );
+
 }
 function FootnoteRemove(andPull)
 {
