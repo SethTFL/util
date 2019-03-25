@@ -71,7 +71,8 @@
                 <button class="Transfer DOM" onclick="ToDOM()">Convert to DOM Objects →</button>
             </dd>
             <dd>
-                <textarea class="Stage" style="width:100%; white-space:nowrap;"></textarea>
+                <textarea class="Stage" style="width:100%; white-space:nowrap;">
+                </textarea>
             </dd>
         </dl>
         <dl class="Editor DOM">
@@ -93,8 +94,8 @@
                 <span>
                     <button onclick="QuotePullCreate()" title="Create">+</button>
                     <button onclick="QuotePullRemove()" title="Delete">&minus;</button>
-                    <button onclick="QuotePullMove(true)" title="Move Up">&UpArrowBar;</button>
-                    <button onclick="QuotePullMove(false)" title="Move Down">&DownArrowBar;</button>
+                    <button onclick="QuotePullMove(false)" title="Move Up">&UpArrowBar;</button>
+                    <button onclick="QuotePullMove(true)" title="Move Down">&DownArrowBar;</button>
                     <button onclick="QuotePullSpread()" title="Redistribute">&UpArrowDownArrow;</button>
                 </span>
                 <span> Footnote:</span>
@@ -114,7 +115,7 @@ var StageHTML = document.querySelector(".Editor.HTML .Stage");
 var StageDOM = document.querySelector(".Editor.DOM .Stage");
 var FARFind = document.querySelector(".FAR.Find");
 var FARReplace = document.querySelector(".FAR.Replace");
-var Selection = [];
+var Selection = {};
 //// utility functions ///////////////////////
 function Iterate(inSelector, inProcessor)
 {
@@ -143,6 +144,7 @@ function DOMSelection()
     {
         output.Across = FindBetween(output.Up[0], output.Down[0]);
     }
+    Selection = output;
     return output;
 }
 function FindStrand(inElement, inRoot)
@@ -230,19 +232,19 @@ function QuoteBlockCreate()
     var i;
 
     replacement = document.createElement("blockquote");
-    if(Selection.length == 0 || Selection[0].nodeName == "BLOCKQUOTE")
+    if(!Selection.Across || Selection.Across[0].nodeName.toLowerCase == "blockquote")
         return false;
 
     text = "";
-    StageDOM.insertBefore(replacement, Selection[0]);
+    StageDOM.insertBefore(replacement, Selection.Across[0]);
 
-    for(i=0; i<Selection.length; i++)
+    for(i=0; i<Selection.Across.length; i++)
     {
-        if(Selection[i].innerHTML)
+        if(Selection.Across[i].innerHTML)
         {
-            text += Selection[i].innerHTML + "<br/>";
+            text += Selection.Across[i].innerHTML + "<br/>";
         }
-        StageDOM.removeChild(Selection[i]);
+        StageDOM.removeChild(Selection.Across[i]);
     }
     replacement.innerHTML = text;
     return replacement;
@@ -251,10 +253,13 @@ function QuoteBlockRemove()
 {
     var block;
     var text;
-    if(Selection.length == 0)
-        return;
-    var block = Selection[0];
-    if(block.nodeName.toUpperCase() == "BLOCKQUOTE")
+    if(!Selection.Across)
+    {
+        return false;
+    }
+        
+    var block = Selection.Across[0];
+    if(block.nodeName.toLowerCase() == "blockquote")
     {
         text = "<p>" + block.innerHTML.split("<br>").join("</p><p>") + "</p>";
         block.insertAdjacentHTML("beforeBegin", text);
@@ -263,52 +268,55 @@ function QuoteBlockRemove()
 }
 function QuotePullCreate()
 {
-    var selection, quote, string;
-    selection = DOMSelection();
-    if(!selection.Across)
-    {
-        return;
-    }
+    var quote, string;
     quote = document.createElement("h6");
-    string = selection.Text;
+    string = Selection.Text;
     string = string.charAt(0).toUpperCase() + string.slice(1);
     if(string[string.length-1] != ".")
     {
         string = string.concat(".");
     }
     quote.innerHTML = string;
-    StageDOM.insertBefore(quote, selection.Across[0]);
+    StageDOM.insertBefore(quote, Selection.Across[0]);
+    SelectionEmulateUser(quote);
 }
 function QuotePullRemove()
 {
-    var selection = DOMSelection();
-    if(!selection.Across)
-        return;
-
-    if(selection.Across[0].nodeName.toUpperCase() == "H6")
+    if(!Selection.Across)
     {
-        StageDOM.removeChild(selection.Across[0]);
+        return;
+    }
+    if(Selection.Across[0].nodeName.toLowerCase() == "h6")
+    {
+        StageDOM.removeChild(Selection.Across[0]);
     }
 }
-function QuotePullMove(inDown)
+function QuotePullMove(inDirection)
 {
-    var selection, quote, string;
-    selection = DOMSelection();
-    if(!selection.Across)
+    var quote, reference;
+    var selection;
+    var range;
+
+    if(!Selection.Across)
     {
         return;
     }
-    /*
-    quote = document.createElement("h6");
-    string = selection.Text;
-    string = string.charAt(0).toUpperCase() + string.slice(1);
-    if(string[string.length-1] != ".")
+
+    quote = Selection.Across[0];
+    if(quote.nodeName.toLowerCase() == "h6")
     {
-        string = string.concat(".");
+        if(inDirection)
+        {
+            reference = quote.nextSibling.nextElementSibling
+        }
+        else
+        {
+            reference = quote.previousElementSibling;
+        }
+        StageDOM.insertBefore(quote, reference);
+
+        SelectionEmulateUser(quote);
     }
-    quote.innerHTML = string;
-    StageDOM.insertBefore(quote, selection.Across[0]);
-    */
 }
 function QuotePullSpread()
 {
@@ -367,14 +375,15 @@ function QuotePullSpread()
 }
 function FootnoteRemove(andPull)
 {
-    var selection = DOMSelection();
     var i;
-    if(!selection.Across)
-        return;
-
-    for(i=0; i<selection.Across.length; i++)
+    if(!Selection.Across)
     {
-        var p = selection.Across[i];
+        return;
+    }
+
+    for(i=0; i<Selection.Across.length; i++)
+    {
+        var p = Selection.Across[i];
         var a = p.querySelector("a");
         if(!a)
         {
@@ -448,10 +457,10 @@ function SelectionCreate()
     var selection = DOMSelection();
     if(selection.Across)
     {
-        Selection = selection.Across;
-        for(i=0; i<Selection.length; i++)
+        Selection = selection;
+        for(i=0; i<Selection.Across.length; i++)
         {
-            Selection[i].className="Selection"
+            Selection.Across[i].className = "Selection";
         }
         return true;
     }
@@ -459,10 +468,24 @@ function SelectionCreate()
 }
 function SelectionRemove()
 {
-    for(i=0; i<Selection.length; i++)
+    if(Selection.Across)
     {
-        Selection[i].removeAttribute("class");
+        for(i=0; i<Selection.Across.length; i++)
+        {
+            Selection.Across[i].removeAttribute("class");
+        }
     }
+
+}
+function SelectionEmulateUser(inNode)
+{
+    var range, selection;
+    range = document.createRange();
+    range.selectNodeContents(inNode);
+    selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    SelectionCreate();
 }
         </script>
     </body>
