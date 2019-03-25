@@ -84,12 +84,24 @@
             </dd>
             <dd>Within Selection:</dd>
             <dd>
-                <button onclick="QuoteBlockCreate()">Block Quote</button>
-                <button onclick="QuoteBlockRemove()">Remove Block Quote</button>
-                <button onclick="QuotePullCreate()">Pull Quote</button>
-                <button onclick="QuotePullRemove()">Remove Pull Quote</button>
-                <button onclick="FootnoteRemove(false)">Remove Footnotes</button>
-                <button onclick="FootnoteRemove(true) ">Remove Footnotes and build Pull Quotes</button>
+                <span> Block Quote:</span>
+                <span>
+                    <button onclick="QuoteBlockCreate()" title="Create">+</button>
+                    <button onclick="QuoteBlockRemove()" title="Delete">&minus;</button>
+                </span>
+                <span> Pull Quote:</span>
+                <span>
+                    <button onclick="QuotePullCreate()" title="Create">+</button>
+                    <button onclick="QuotePullRemove()" title="Delete">&minus;</button>
+                    <button onclick="QuotePullMove(true)" title="Move Up">&UpArrowBar;</button>
+                    <button onclick="QuotePullMove(false)" title="Move Down">&DownArrowBar;</button>
+                    <button onclick="QuotePullSpread()" title="Redistribute">&UpArrowDownArrow;</button>
+                </span>
+                <span> Footnote:</span>
+                <span>
+                    <button onclick="FootnoteRemove(false)" title="Delete">&hkswarow;</button>
+                    <button onclick="FootnoteRemove(true) " title="Build pull quote from and delete">&nwarhk;</button>
+                </span>
             </dd>
             <dd>
                 <div onmouseup="SelectionCreate()" class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
@@ -278,18 +290,41 @@ function QuotePullRemove()
         StageDOM.removeChild(selection.Across[0]);
     }
 }
+function QuotePullMove(inDown)
+{
+    var selection, quote, string;
+    selection = DOMSelection();
+    if(!selection.Across)
+    {
+        return;
+    }
+    /*
+    quote = document.createElement("h6");
+    string = selection.Text;
+    string = string.charAt(0).toUpperCase() + string.slice(1);
+    if(string[string.length-1] != ".")
+    {
+        string = string.concat(".");
+    }
+    quote.innerHTML = string;
+    StageDOM.insertBefore(quote, selection.Across[0]);
+    */
+}
 function QuotePullSpread()
 {
     var i;
     var quotes;
     var quote;
-    var ps;
-    var p;
+    var children;
+    var child;
     var paddingStart;
     var paddingEnd;
     var spacing;
+    var encountered, inserted;
+    var elInsert, elReference;
 
     quotes = StageDOM.querySelectorAll("h6");
+    available = [];
     for(i=0; i<quotes.length; i++)
     {
         quote = quotes[i];
@@ -298,9 +333,37 @@ function QuotePullSpread()
 
     paddingStart = 2;
     paddingEnd = 2;
-    ps = StageDOM.querySelectorAll("p");
-    spacing = Math.floor( (ps.length-(paddingStart+paddingEnd)) / quotes.length );
+    children = [];
+    for(i=paddingStart; i<StageDOM.children.length; i++)
+    {
+        child = StageDOM.children[i];
+        if(child.nodeName.toLowerCase() == "hr")
+        {
+            children.splice(children.length-paddingEnd, paddingEnd);
+            //console.log("found the hr at", i);
+            break;
+        }
+        children.push(child);
+    }
+    //console.log("total children:", StageDOM.children.length, "eligible children:", children.length);
 
+    spacing = Math.ceil( (children.length-(paddingStart+paddingEnd)) / quotes.length );
+    encountered = 0;
+    inserted = 0;
+
+    for(i=0; i<children.length; i++)
+    {
+        encountered++;
+        if(encountered == spacing)
+        {
+            elInsert = quotes[inserted];
+            elReference = children[i];
+            StageDOM.insertBefore(elInsert, elReference);
+            //console.log("inserted at", i);
+            encountered = 0;
+            inserted++;
+        }
+    }
 }
 function FootnoteRemove(andPull)
 {
