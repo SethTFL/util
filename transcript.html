@@ -132,23 +132,23 @@
                 </span>
             </dd>
             <dd>
-                <span> Block Quote:</span>
+                <span> Blockquote:</span>
                 <span>
-                    <button onclick="QuoteBlockCreate()" title="Create">+</button>
-                    <button onclick="QuoteBlockRemove()" title="Delete">&minus;</button>
+                    <button onclick="QuoteBlockCreate()" title="Convert Paragraphs to Blockquote">&rsh;</button>
+                    <button onclick="QuoteBlockRemove()" title="Convert Blockquote to Paragraphs">&ldsh;</button>
                 </span>
-                <span> Pull Quote:</span>
+                <span> Pullquote:</span>
                 <span>
-                    <button onclick="QuotePullCreate()" title="Create">+</button>
-                    <button onclick="QuotePullRemove()" title="Delete">&minus;</button>
-                    <button onclick="QuotePullMove(false)" title="Move Up">&UpArrowBar;</button>
-                    <button onclick="QuotePullMove(true)" title="Move Down">&DownArrowBar;</button>
-                    <button onclick="QuotePullSpread()" title="Redistribute">&UpArrowDownArrow;</button>
+                    <button onclick="QuotePullCreate()" title="Copy Text as Pullquote">&boxbox;</button>
+                    <button onclick="QuotePullRemove()" title="Delete Pullquote">&times;</button>
+                    <button onclick="QuotePullMove(false)" title="Move Pullquote Up">&UpTeeArrow;</button>
+                    <button onclick="QuotePullMove(true)" title="Move Pullquote Down">&DownTeeArrow;</button>
+                    <button onclick="QuotePullSpread()" title="Redistribute Pullquotes">&UpArrowDownArrow;</button>
                 </span>
                 <span> Footnote:</span>
                 <span>
-                    <button onclick="FootnoteRemove(false)" title="Delete">&hkswarow;</button>
-                    <button onclick="FootnoteRemove(true) " title="Build pull quote from and delete">&nwarhk;</button>
+                    <button onclick="FootnoteRemove(false)" title="Delete Footnotes">&times;</button>
+                    <button onclick="FootnoteRemove(true) " title="Convert Footnotes into Pullquotes (Requires re-linked footnotes, uses quotation marks to )">&curarr;</button>
                 </span>
             </dd>
             <dd>
@@ -260,9 +260,14 @@ function ToHTML()
     {
         text += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
     }
-    StageHTML.value = text;
+
     PanelHTML.style.display = "block";
     PanelDOM.style.display = "none";
+
+    StageHTML.value = text;
+    StageHTML.scrollLeft = 0;
+    StageHTML.scrollTop = 0;
+    StageHTML.style.height = window.innerHeight - StageHTML.offsetTop - 50;
 }
 function ToDOM()
 {
