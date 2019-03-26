@@ -6,28 +6,48 @@
         <style>
             body
             {
-                font-family:monospace;
+                font-family:sans-serif;
+                font-size:11px;
             }
             .Editor
             {
-                max-width: 960px;
                 margin:0 auto;
+            }
+            dt
+            {
+                font-weight:bold;
             }
             dd
             {
                 margin:0;
                 padding:5px;
+                border-top:1px dotted #ddd;
+            }
+            textarea
+            {
+                font-family:monospace;
+            }
+            button
+            {
+                padding:3px 10px 3px 10px;
+                border:none;
+                border-radius:3px;
+                cursor:pointer;
+                background:#8bcb96;
+                color:#fff;
+            }
+            button:hover
+            {
+                background:#555;
             }
             .Stage
             {
-                max-width:90%;
                 min-height:200px;
                 border:1px solid #ddd;
                 padding:8px;
                 background:#eee;
                 color:#333;
                 font-size:12px;
-                font-family:monospace;
             }
             .Stage ::selection
             {
@@ -36,6 +56,26 @@
             .Stage .Selection
             {
                 border:1px solid #F30;
+            }
+            .Stage > *
+            {
+                border-top: 1px dotted #bcbcbc;
+            }
+            .Stage h6
+            {
+                max-width:500px;
+                font-size: 200%;
+                font-style: italic;
+            }
+            .Stage blockquote
+            {
+                font-style:italic;
+                font-size:110%;
+            }
+            .Stage hr
+            {
+                padding:3px;
+                background:#a00;
             }
             fieldset
             {
@@ -51,24 +91,26 @@
             {
                 text-align:right;
             }
-            h6
-            {
-                font-size: 100%;
-                font-style: italic;
-            }
         </style>
     </head>
     <body onload="ToHTML()">
         <dl class="Editor HTML">
-            <dt>HTML String Editor</dt>
             <dd>
-                <button onclick="FixNewlines()">Remove Empty Lines</button>
-                &nbsp;
-                <input type="text" class="FAR Find"/>
-                <button onclick="FixCustom()">Becomes ⇝</button>
-                <input type="text" class="FAR Replace"/>
-                &nbsp;
-                <button class="Transfer DOM" onclick="ToDOM()">Convert to DOM Objects →</button>
+                <span> Editor:</span>
+                <span>
+                    <button class="Transfer DOM" onclick="ToDOM()">DOM Objects Editor</button>
+                </span>
+            </dd>
+            <dd>
+                <span> Document:</span>
+                <span>
+                    <button onclick="FixNewlines()">Remove Empty Lines</button>
+                    &nbsp;
+                    <input type="text" class="FAR Find"/>
+                    <button onclick="FixCustom()">Becomes ⇝</button>
+                    <input type="text" class="FAR Replace"/>
+                    &nbsp;
+                </span>
             </dd>
             <dd>
                 <textarea class="Stage" style="width:100%; white-space:nowrap;">
@@ -76,32 +118,37 @@
             </dd>
         </dl>
         <dl class="Editor DOM">
-            <dt>DOM Object Editor</dt>
-            <dd>Within Document:</dd>
             <dd>
-                <button onclick="ToHTML()">← Convert to HTML string</button>
-                <button onclick="FixTitles()">Convert P+Strong to H2</button>
-                <button onclick="FixFootnotes()">Re-link Footnotes</button>
-            </dd>
-            <dd>Within Selection:</dd>
-            <dd>
-                <span> Block Quote:</span>
+                <span> Editor:</span>
                 <span>
-                    <button onclick="QuoteBlockCreate()" title="Create">+</button>
-                    <button onclick="QuoteBlockRemove()" title="Delete">&minus;</button>
+                    <button onclick="ToHTML()">HTML String Editor</button>
                 </span>
-                <span> Pull Quote:</span>
+            </dd>
+            <dd>
+                <span> Document:</span>
                 <span>
-                    <button onclick="QuotePullCreate()" title="Create">+</button>
-                    <button onclick="QuotePullRemove()" title="Delete">&minus;</button>
-                    <button onclick="QuotePullMove(false)" title="Move Up">&UpArrowBar;</button>
-                    <button onclick="QuotePullMove(true)" title="Move Down">&DownArrowBar;</button>
-                    <button onclick="QuotePullSpread()" title="Redistribute">&UpArrowDownArrow;</button>
+                    <button onclick="FixTitles()">Convert P+Strong to H2</button>
+                    <button onclick="FixFootnotes()">Re-link Footnotes</button>
+                </span>
+            </dd>
+            <dd>
+                <span> Blockquote:</span>
+                <span>
+                    <button onclick="QuoteBlockCreate()" title="Convert Paragraphs to Blockquote">&rsh;</button>
+                    <button onclick="QuoteBlockRemove()" title="Convert Blockquote to Paragraphs">&ldsh;</button>
+                </span>
+                <span> Pullquote:</span>
+                <span>
+                    <button onclick="QuotePullCreate()" title="Copy Text as Pullquote">&boxbox;</button>
+                    <button onclick="QuotePullRemove()" title="Delete Pullquote">&times;</button>
+                    <button onclick="QuotePullMove(false)" title="Move Pullquote Up">&UpTeeArrow;</button>
+                    <button onclick="QuotePullMove(true)" title="Move Pullquote Down">&DownTeeArrow;</button>
+                    <button onclick="QuotePullSpread()" title="Redistribute Pullquotes">&UpArrowDownArrow;</button>
                 </span>
                 <span> Footnote:</span>
                 <span>
-                    <button onclick="FootnoteRemove(false)" title="Delete">&hkswarow;</button>
-                    <button onclick="FootnoteRemove(true) " title="Build pull quote from and delete">&nwarhk;</button>
+                    <button onclick="FootnoteRemove(false)" title="Delete Footnotes">&times;</button>
+                    <button onclick="FootnoteRemove(true) " title="Convert Footnotes into Pullquotes (Requires re-linked footnotes, uses quotation marks to )">&curarr;</button>
                 </span>
             </dd>
             <dd>
@@ -213,9 +260,14 @@ function ToHTML()
     {
         text += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
     }
-    StageHTML.value = text;
+
     PanelHTML.style.display = "block";
     PanelDOM.style.display = "none";
+
+    StageHTML.value = text;
+    StageHTML.scrollLeft = 0;
+    StageHTML.scrollTop = 0;
+    StageHTML.style.height = window.innerHeight - StageHTML.offsetTop - 50;
 }
 function ToDOM()
 {
@@ -449,6 +501,10 @@ function FixNewlines()
 function FixCustom()
 {
     StageHTML.value = StageHTML.value.split(FARFind.value).join(FARReplace.value);
+}
+function FixSpaceStrands()
+{
+    StageHTML.value.indexOf("&nbsp;&nbsp;")
 }
 function SelectionCreate()
 {
