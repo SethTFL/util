@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
             body
             {
@@ -23,9 +25,14 @@
                 padding:5px;
                 border-top:1px dotted #ddd;
             }
+            h6
+            {
+                display:block;
+            }
             textarea
             {
                 font-family:monospace;
+                line-height: 1.5em;
             }
             button
             {
@@ -134,8 +141,10 @@
             <dd>
                 <span> Blockquote:</span>
                 <span>
-                    <button onclick="QuoteBlockCreate()" title="Convert Paragraphs to Blockquote">&rsh;</button>
-                    <button onclick="QuoteBlockRemove()" title="Convert Blockquote to Paragraphs">&ldsh;</button>
+                    <button onclick="QuoteBlockCreate()" title="Wrap with Blockquote">⎘</button>
+                    <button onclick="QuoteBlockRemove()" title="Unwrap Blockquote">	⎗</button>
+                    <button onclick="QuoteBlockCompress()" title="Collapse">⤷⤶</button>
+                    <button onclick="QuoteBlockExpand()" title="Expand">⤶⤷</button>
                 </span>
                 <span> Pullquote:</span>
                 <span>
@@ -252,17 +261,18 @@ function FindBetween(inElement1, inElement2)
 //// commands ////////////////////////////////
 function ToHTML()
 {
-    SelectionRemove();
-    var text = "";
-    var str;
+    var text;
     var i;
+
+    SelectionRemove();
+    PanelHTML.style.display = "block";
+    PanelDOM.style.display = "none";
+
+    text = "";
     for(i=0; i<StageDOM.childNodes.length; i++)
     {
         text += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
     }
-
-    PanelHTML.style.display = "block";
-    PanelDOM.style.display = "none";
 
     StageHTML.value = text;
     StageHTML.scrollLeft = 0;
@@ -312,6 +322,31 @@ function QuoteBlockRemove()
         StageDOM.insertBefore(block.firstChild, block);
     }
     StageDOM.removeChild(block);
+
+}
+function QuoteBlockCompress()
+{
+    var text;
+    var i;
+    var p;
+
+    if(!Selection.Across)
+    {
+        return false;
+    }
+    
+    text = [];
+    for(i=0; i<Selection.Across.length; i++)
+    {
+        text.push(Selection.Across[i].innerHTML);
+    }
+    p = document.createElement("p");
+    p.innerHTML = text.join("<br/>");
+
+    StageDOM.insertBefore(p, Selection.Across[0]);
+}
+function QuoteBlockExpand()
+{
 
 }
 function QuotePullCreate()
