@@ -40,7 +40,7 @@
                 border:none;
                 border-radius:3px;
                 cursor:pointer;
-                background:#0cc22a;
+                background:#099cc9;
                 color:#fff;
             }
             button:hover
@@ -141,10 +141,8 @@
             <dd>
                 <span> Blockquote:</span>
                 <span>
-                    <button onclick="QuoteBlockCreate()" title="Wrap with Blockquote">⎘</button>
-                    <button onclick="QuoteBlockRemove()" title="Unwrap Blockquote">	⎗</button>
-                    <button onclick="QuoteBlockCompress()" title="Collapse">⤷⤶</button>
-                    <button onclick="QuoteBlockExpand()" title="Expand">⤶⤷</button>
+                    <button onclick="QuoteBlockCreate()" title="Wrap with Blockquote">▣</button>
+                    <button onclick="QuoteBlockRemove()" title="Unwrap Blockquote">□▪</button>
                 </span>
                 <span> Pullquote:</span>
                 <span>
@@ -158,6 +156,12 @@
                 <span>
                     <button onclick="FootnoteRemove(false)" title="Delete Footnotes">&times;</button>
                     <button onclick="FootnoteRemove(true) " title="Convert Footnotes into Pullquotes (Requires re-linked footnotes, uses quotation marks to )">&curarr;</button>
+                </span>
+                <span> Any:</span>
+                <span>
+                    <button onclick="GeneralElementsCompress()" title="Compress">⤷⤶</button>
+                    <button onclick="GeneralElementsExpand()" title="Expand">⤶⤷</button>
+                    <button onclick="GeneralElementsDestroy()" title="Destroy">💀</button>
                 </span>
             </dd>
             <dd>
@@ -324,7 +328,7 @@ function QuoteBlockRemove()
     StageDOM.removeChild(block);
 
 }
-function QuoteBlockCompress()
+function GeneralElementsCompress()
 {
     var text;
     var i;
@@ -335,18 +339,53 @@ function QuoteBlockCompress()
         return false;
     }
     
+    p = document.createElement("p");
+    StageDOM.insertBefore(p, Selection.Across[0]);
     text = [];
     for(i=0; i<Selection.Across.length; i++)
     {
         text.push(Selection.Across[i].innerHTML);
+        StageDOM.removeChild(Selection.Across[i]);
     }
-    p = document.createElement("p");
-    p.innerHTML = text.join("<br/>");
-
-    StageDOM.insertBefore(p, Selection.Across[0]);
+    p.innerHTML = text.join("<br>");
 }
-function QuoteBlockExpand()
+function GeneralElementsExpand()
 {
+    var text;
+    var i;
+    var p;
+
+    if(!Selection.Across)
+    {
+        return false;
+    }
+    
+    text = Selection.Across[0].innerHTML.split("<br>");
+
+    for(i=0; i<text.length; i++)
+    {
+        p = document.createElement("p");
+        p.innerHTML = text[i];
+        StageDOM.insertBefore(p, Selection.Across[0]);
+    }
+
+    StageDOM.removeChild(Selection.Across[0]);
+}
+function GeneralElementsDestroy()
+{
+    var text;
+    var i;
+    var p;
+
+    if(!Selection.Across)
+    {
+        return false;
+    }
+
+    for(i=0; i<Selection.Across.length; i++)
+    {
+        StageDOM.removeChild(Selection.Across[i]);
+    }
 
 }
 function QuotePullCreate()
