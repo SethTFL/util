@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style></style>
+    </head>
+    <body>
+        <dl>
+            <dt>WOFF Converter</dt>
+            <dd><a target="_blank" href="https://convertio.co/ttf-woff/">convertio.co/ttf-woff</a></dd>
+            <dt>Input File</dt>
+            <dd><input type="file"></dd>
+            <dt>Output CSS</dt>
+            <dd><textarea></textarea></dd>
+            <dt>Preview</dt>
+            <dd>
+                <p style="font-size:70px;">
+                    <span>Almost before we knew it, we had left the ground.</span><br/>
+                    <em>Almost before we knew it, we had left the ground.</em><br/>
+                    <strong>Almost before we knew it, we had left the ground.</strong>
+                </p>
+            </dd>
+        </dl>
+        <script>
+
+            let tagStyle   = document.querySelector("style");
+            let tagDisplay = document.querySelector("p");
+            let tagInput   = document.querySelector("input");
+            let tagOutput  = document.querySelector("textarea");
+            let reader = new FileReader();
+            let handlerChange = () =>
+            {
+                reader.readAsDataURL(tagInput.files[0]);
+            }
+            let handlerLoad = () =>
+            {
+                let family = tagInput.files[0].name.split(".")[0];
+                let output = `
+@font-face {
+    font-family: '`+family+`';
+    src: url(`+reader.result+`);
+}`;
+
+                tagDisplay.style.fontFamily = family;
+                tagOutput.value = output;
+                tagStyle.innerHTML = output;
+            }
+
+            tagInput.addEventListener("change", handlerChange);
+            reader.addEventListener("load", handlerLoad);
+        </script>
+    </body>
+</html>
