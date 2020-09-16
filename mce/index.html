@@ -2,8 +2,16 @@
 <html>
     <head>
         <script type="text/javascript" src="tiny_mce.js"></script>
+        <style>
+            .mceIframeContainer
+            {
+                border:1px solid black;
+            }
+        </style>
     </head>
     <body>
+        <button class="Copy">Get HTML</button>
+        <textarea class="Copy"></textarea>
         <textarea class=vLargeTextField cols=40 id=id_transcript name=transcript rows=10></textarea>
         <script type="text/javascript">
         tinyMCE.init(
@@ -16,7 +24,9 @@
                 "entity_encoding":"numeric",
                 "document_base_url":"",
                 "body_class":"id_transcript=post-wrapper",
-                "theme_advanced_resizing":true,"convert_urls":false,"theme_advanced_statusbar_location":"bottom",
+                "theme_advanced_resizing":true,
+                "convert_urls":false,
+                "theme_advanced_statusbar_location":"bottom",
                 "cleanup_on_startup":true,"elements":"id_transcript",
                 "theme_advanced_path":"false",
                 "plugins":"advimage,advlink,fullscreen,paste,media,visualchars",
@@ -36,6 +46,10 @@
                 "mode":"exact"
             }
         );
+        document.querySelector("button.Copy").addEventListener("click", function(inEvent)
+        {
+            document.querySelector("textarea.Copy").value = document.querySelector("iframe").contentDocument.body.innerHTML;
+        });
         </script>
     </body>
 </html>
