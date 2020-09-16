@@ -558,12 +558,59 @@ function FixFootnotes()
         inElement.setAttribute("name", inElement.testContent || inElement.innerText);
         inElement.removeAttribute("href");
     }
+    function ProcessFootnote(inElement)
+    {
+        inElement.setAttribute("name", inElement.testContent || inElement.innerText);
+        inElement.removeAttribute("href");
+        CleanPullquote(inElement.parentNode);
+    }
+    function CleanPullquote(inParagraph)
+    {
+        var i;
+        var anchors;
+        var contents;
+        var quoteStart, quoteEnd;
+        var quote;
+
+        if(!inParagraph)
+        {
+            return false;
+        }
+
+        anchors = inParagraph.querySelectorAll("a");
+        if(anchors.length == 0)
+        {
+            return false;
+        }
+
+        for(i=0; i<anchors.length; i++)
+        {
+            inParagraph.removeChild(anchors[i]);
+        }
+        contents = inParagraph.innerHTML.replace("&nbsp;", "");
+        quoteStart = contents.indexOf("“");
+        quoteEnd = contents.indexOf("”");
+        
+        if(quoteStart != -1)
+        {
+            if(quoteEnd != -1)
+            {
+                anchors[0].innerHTML = anchors[0].getAttribute("name") + " - OK";
+                inParagraph.innerHTML = anchors[0].outerHTML + " “" + contents.substring(quoteStart+1, quoteEnd) + "”";
+                return true;
+            }
+        }
+        inParagraph.appendChild(anchors[0]);
+        anchors[0].innerHTML = anchors[0].getAttribute("name") + " - FIX";
+        return false;
+    }
 
     Iterate("a[href*='#_ftnref']", ProcessFooter);
     Iterate("a[href*='#_ftn']", ProcessCopy)
-    Iterate("a[href*='#_msoanchor']", ProcessFooter);
+    Iterate("a[href*='#_msoanchor']", ProcessFootnote);
     Iterate("a[href*='#_msocom']", ProcessCopy);
 }
+
 function FixNewlines()
 {
     StageHTML.value = StageHTML.value.replace(/^\s*$(?:\r\n?|\n)/gm, "");
