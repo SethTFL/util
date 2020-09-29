@@ -143,24 +143,23 @@
                 <span>
                     <button onclick="QuoteBlockCreate()" title="Wrap with Blockquote">▣</button>
                     <button onclick="QuoteBlockRemove()" title="Unwrap Blockquote">□▪</button>
+                    <button onclick="GeneralElementsCompress()" title="Compress">⤷⤶</button>
+                    <button onclick="GeneralElementsExpand()" title="Expand">⤶⤷</button>
                 </span>
                 <span> Pullquote:</span>
                 <span>
                     <button onclick="QuotePullCreate()" title="Copy Text as Pullquote">&boxbox;</button>
-                    <button onclick="QuotePullRemove()" title="Delete Pullquote">&times;</button>
                     <button onclick="QuotePullMove(false)" title="Move Pullquote Up">&UpTeeArrow;</button>
                     <button onclick="QuotePullMove(true)" title="Move Pullquote Down">&DownTeeArrow;</button>
                     <button onclick="QuotePullSpread()" title="Redistribute Pullquotes">&UpArrowDownArrow;</button>
                 </span>
                 <span> Footnote:</span>
                 <span>
-                    <button onclick="FootnoteRemove(false)" title="Delete Footnotes">&times;</button>
-                    <button onclick="FootnoteRemove(true) " title="Convert Footnotes into Pullquotes (Requires re-linked footnotes, uses quotation marks to )">&curarr;</button>
+                    <button onclick="FootnoteRemove(false)" title="Safely Delete Footnotes (Removes in-copy reference and the deletes footnote)">🗑</button>
+                    <button onclick="FootnoteRemove(true) " title="Convert Footnotes into Pullquotes (Requires re-linked footnotes, uses quotation marks)">☝</button>
                 </span>
                 <span> Any:</span>
                 <span>
-                    <button onclick="GeneralElementsCompress()" title="Compress">⤷⤶</button>
-                    <button onclick="GeneralElementsExpand()" title="Expand">⤶⤷</button>
                     <button onclick="GeneralElementsDestroy()" title="Destroy">💀</button>
                 </span>
             </dd>
@@ -402,7 +401,7 @@ function QuotePullCreate()
     StageDOM.insertBefore(quote, Selection.Across[0]);
     SelectionEmulateUser(quote);
 }
-function QuotePullRemove()
+function QuotePullRemove()/*unused*/
 {
     if(!Selection.Across)
     {
