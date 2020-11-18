@@ -1,304 +1,148 @@
----
----
 <!DOCTYPE html>
 <html>
-    <head>
-        <script src="papaparse.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
-        <style>
-            dt
-            {
-                font-weight:bold;
-            }
-            dt::after
-            {
-                content:":";
-            }
-            dd
-            {
-                margin-left:0;
-            }
-        </style>
-    </head>
-    <body>
-        <div ng-app="App" ng-controller="Controller">
-            <div style="width:30%; float:left;">
-                <h2>Donation Products</h2>
-                <ol ng-if="!StatusDonate.Completed">
-                    <li>
-                        <strong>Download CSV:</strong>
-                        <a target="_blank" href="https://truthforlife.org/admin/donations/donation/export/">Donation Exports</a>
-                    </li>
-                    <li>
-                        <strong>Upload CSV:</strong>
-                        <input type="file" data-import-donate-csv class="form-control">
-                    </li>
-                </ol>
-                <div ng-if="StatusDonate.Completed">
-                    <dl ng-repeat="Code in StatusDonate.Codes track by $index">
-                        <dt>
-                            <span ng-bind="Code.ID"></span> / <span ng-bind="Code.Name"></span>
-                        </dt>
-                        <dd><span ng-bind="Code.Count"></span></dd>
-                    </dl>
-                    <dl>
-                        <dt>
-                            <span>Total</span>
-                        </dt>
-                        <dd><span ng-bind="StatusDonate.Total"></span></dd>
-                    </dl>
-                </div>
-            </div>
-            <div style="width:30%; float:left;">
-                <h2>Store Orders</h2>
-                <ol ng-if="!StatusStore.Completed">
-                    <li>
-                        <strong>Download CSV:</strong>
-                        <a target="_blank" href="https://truthforlife.org/admin/shop/order/export/">Store Exports</a>
-                    </li>
-                    <li>
-                        <strong>Upload CSV:</strong>
-                        <input type="file" data-import-store-csv class="form-control">
-                    </li>
-                </ol>
-                <div ng-if="StatusStore.Completed">
-                    <dl ng-repeat="Code in StatusStore.Codes track by $index">
-                        <dt>
-                            <span ng-bind="Code.ID"></span> / <span ng-bind="Code.Name"></span>
-                        </dt>
-                        <dd><span ng-bind="Code.Count"></span></dd>
-                    </dl>
-                    <dl>
-                        <dt>
-                            <span>Total</span>
-                        </dt>
-                        <dd><span ng-bind="StatusStore.Total"></span></dd>
-                    </dl>
-                </div>
-            </div>
-            <div style="width:30%; float:left;">
-                <h2>Store and Donate totals</h2>
-                <dl>
-                    <dt>
-                        <span>Grand Total</span>
-                    </dt>
-                    <dd><span ng-bind="StatusStore.Total + StatusDonate.Total"></span></dd>
-                </dl>
-            </div>
+<head>
+    <script src="papaparse.js"></script>
+    <script src="https://unpkg.com/vue@3.0.2"></script>
+    <style>
+        h3
+        {
+            border-bottom: 1px solid #eee;;
+        }
+        td, th
+        {
+            min-width:200px;
+            text-align:left;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div>
+            <h3>Add Code</h3>
+            <input type="text" v-model="user.code"/>
+            <button v-on:click="addCode">+</button>
         </div>
+        <div v-if="codes.length > 0">
+            <h3>Codes</h3>
+            <table>
+                <tr>
+                    <th>Code</th><th>Count</th><th></th>
+                </tr>
+                <tr v-for="code in codes">
+                    <td>{{code.id}}</td><td>{{code.count}}</td><td><button v-on:click="removeCode(code)">-</button></td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <h3>Store Orders Data</h3>
+            <input v-on:change="parseStore" type="file">
+        </div>
+    </div>
 
-        <script>
-var DirectiveFunction = function(inParser)
-{
-    var directive = {};
-    directive.link = function(inScope, inElement, inAttributes)
-    {
-        function handlerEnter(inEvent){
-            if(inEvent){
-                inEvent.preventDefault();
-            }
-            inElement.addClass("Import");
-            inEvent.dataTransfer.effectAllowed = 'copy';
-            return false;
-        }
-        
-        function handlerDrop(inEvent){
-            inElement.removeClass("Import");
-            if(inEvent){
-                inEvent.preventDefault();
-            }
-            parse(event.dataTransfer.files[0]);
-            return false;
-        }
-        
-        function handlerChange(inEvent){
-            inEvent.stopImmediatePropagation();
-            parse(inEvent.target.files[0]);
-        };
-        
-        function parse(inFile){
-            inParser.Parse(inFile, function(){
-                inScope.$apply();
-            });
-        }
-        
-        function handlerLeave(){
-            inElement.removeClass("Import");
-        }
-        
-        inElement.on("dragenter dragstart dragend dragleave dragover drag drop", function (inEvent) {inEvent.preventDefault();});
-        inElement.on('dragenter', handlerEnter);
-        inElement.on('dragleave', handlerLeave);
-        inElement.on('drop', handlerDrop);
-        inElement.on('change', handlerChange);
-        inElement.on('click', function(inEvent){inEvent.stopImmediatePropagation();});
-    };
-    return directive;
-};
-
-var App;
-App = angular.module("App", []);
-App.directive("importStoreCsv", ["ParseStore", DirectiveFunction]);
-App.directive("importDonateCsv", ["ParseDonate", DirectiveFunction]);
-App.factory("ParseStore", [function()
-{
-    var obj = {};
-    obj.Fields = {
-        Code:[],
-        Quantity:[]
-    };
-    obj.Codes = [{
-        ID:"32283",
-        Name:"Prepare Him Room",
-        Count:0
-    },
-    {
-        ID:"32282K",
-        Name:"Prepare Him Room Kit",
-        Count:0
-    }];
-    obj.Total = 0;
-    obj.Completed = false;
-    obj.Parse = function(inData, inHandlerDone)
-    {
-        Papa.parse(inData, {
-            complete: function(results) {
+<script>
+    Vue.createApp({
+        data()
+        {
+            return {
+                csvStore:{
+                    data:[],
+                    codes:[],
+                    counts:[]
+                },
+                codes:[],
+                user:{
+                    code:"14109USB"
+                }
+            };
+        },
+        methods:{
+            greatReset()
+            {
                 var i, j, k;
-                var row;
-                var cell;
-                var match;
-                var count;
+                var cellCode, cellCount;
                 var code;
 
-                for(i=0; i<obj.Codes.length; i++)
+                // reset all the per-code counts
+                for(i=0; i<this.codes.length; i++)
                 {
-                    console.log("initial count:", obj.Codes[i]);
+                    this.codes[i].count = 0;
                 }
 
-                // go through the header and collect the code/qualtity column pairs
-                for(i=0; i<results.data[0].length; i++)
+                // re-collect the counts from the data
+                for(i=1; i<this.csvStore.data.length; i++)
                 {
-                    cell = results.data[0][i];
-                    if(cell == "Product Code")
-                    {
-                        obj.Fields.Code.push(i);
-                    }
-                    if(cell == "Quantity")
-                    {
-                        obj.Fields.Quantity.push(i);
-                    }
-                }
-                
-                console.log(obj.Fields);
-                console.log("Rows:", results.data.length);
-                for(i=1; i<results.data.length; i++)
-                {
-                    row = results.data[i];
+                    row = this.csvStore.data[i];
 
                     //for each product code field in the row...
-                    for(j=0; j<obj.Fields.Code.length; j++)
+                    for(j=0; j<this.csvStore.codes.length; j++)
                     {
-                        cell = row[obj.Fields.Code[j]];
+                        cellCode = row[ this.csvStore.codes[j] ];
+
                         // see if it has a code we are looking for..
-                        for(k=0; k<obj.Codes.length; k++)
+                        for(k=0; k<this.codes.length; k++)
                         {
-                            code = obj.Codes[k];
+                            code = this.codes[k];
                             // if it has one of the codes we want...
-                            if(code.ID == cell)
+                            if(code.id == cellCode)
                             {
                                 // tally up with the matchng quantity column
-                                count = parseInt(row[obj.Fields.Quantity[j]]);
-                                code.Count += count;
-                                obj.Total += count;
-                                code.HasBeenSet = true;
+                                cellCount = parseInt(row[ this.csvStore.counts[j] ]);
+                                code.count += cellCount;
                                 break;
                             }
                         }
                     }
                 }
-                obj.Completed = true;
-                inHandlerDone();
-            }
-        });
-
-    };
-    return obj;
-}]);
-App.factory("ParseDonate", [function()
-{
-    var obj = {};
-    obj.FieldIndex;
-    obj.Codes = [{
-        ID:"32283",
-        Name:"Prepare Him Room",
-        Count:0
-    },
-    {
-        ID:"32282K",
-        Name:"Prepare Him Room Kit",
-        Count:0
-    }];
-    obj.Total = 0;
-    obj.Completed = false;
-    obj.Parse = function(inData, inHandlerDone)
-    {
-        Papa.parse(inData, {
-            complete: function(results) {
-                var i, j, k;
-                var row;
-                var cell;
-                var match;
-                var count;
-                var code;
-
-                for(i=0; i<obj.Codes.length; i++)
+            },
+            addCode()
+            {
+                console.log(this.user.code);
+                this.codes.push({
+                    id:this.user.code,
+                    count:0
+                });
+                this.greatReset();
+            },
+            removeCode(inCode)
+            {
+                var i;
+                for(i=0; i<this.codes.length; i++)
                 {
-                    console.log("initial count:", obj.Codes[i]);
-                }
-
-                // find the product number column
-                for(i=0; i<results.data[0].length; i++)
-                {
-                    cell = results.data[0][i];
-                    if(cell == "Product Number")
+                    if(this.codes[i] == inCode)
                     {
-                        obj.FieldIndex = i;
-                        break;
+                        this.codes.splice(i, 1);
+                        return;
                     }
                 }
-                
-                console.log(obj.Fields);
-                console.log("Rows:", results.data.length);
-
-                for(i=1; i<results.data.length; i++)
+            },
+            parseStore(inEvent)
+            {
+                let parseDone = results =>
                 {
-                    cell = results.data[i][obj.FieldIndex];
-                    for(j=0; j<obj.Codes.length; j++)
+                    this.csvStore.data = results.data;
+                    this.csvStore.columns = [];
+
+                    for(let i=0; i<results.data[0].length; i++)
                     {
-                        code = obj.Codes[j];
-                        // if it has one of the codes we want...
-                        if(code.ID == cell)
+                        cell = results.data[0][i];
+                        switch(cell.toLowerCase())
                         {
-                            code.Count++;
-                            obj.Total++;
-                            code.HasBeenSet = true;
-                            break;
+                            case "product code" :
+                                this.csvStore.codes.push(i);
+                                break;
+                            case "quantity" :
+                                this.csvStore.counts.push(i);
                         }
                     }
-                }
-                obj.Completed = true;
-                inHandlerDone();
-            }
-        });
+                
+                    this.greatReset();
+                
+                };
 
-    };
-    return obj;
-}]);
-App.controller("Controller", ["$scope", "ParseStore", "ParseDonate", function($scope, ParseStore, ParseDonate)
-{
-    $scope.StatusStore = ParseStore;
-    $scope.StatusDonate = ParseDonate;
-}]);    
-        </script>
-    </body>
+                Papa.parse(inEvent.target.files[0], {complete:parseDone});
+            }
+        }
+    }).mount("#app");
+</script>
+</body>
 </html>
