@@ -13,17 +13,47 @@
             min-width:200px;
             text-align:left;
         }
+        .section
+        {
+            max-width:1024px;
+            margin:0 auto;
+            margin-top:100px;
+        }
+        .column
+        {
+            display:inline-block;
+            margin-right:50px;
+        }
     </style>
 </head>
 <body>
     <div id="app">
-        <div>
-            <h3>Add Code</h3>
-            <input type="text" v-model="user.code"/>
-            <button v-on:click="addCode">+</button>
+        <div class="section section-input">
+            <h2>Setup</h2>
+            <div class="column column-codes">
+                <h3>Code</h3>
+                <form v-on:submit.prevent="addCode">
+                    <input type="text" v-model="user.code"/>
+                    <button>+</button>
+                </form>
+            </div>
+            <div class="column column-orders">
+                <h3>Orders <a target="_blank" href="https://truthforlife.org/admin/shop/order/export/"><small>Download Here</small></a></h3>
+                <form>
+                    <input v-on:change="parseStore" type="file"/>
+                    <strong>{{ csvStore.data.length > 0 ? csvStore.data.length-1 : 0 }}</strong>
+                </form>
+            </div>
+            <div class="column column-orders">
+                <h3>Donations <a target="_blank" href="https://truthforlife.org/admin/donations/donation/export/"><small>Download Here</small></a></h3>
+                <form>
+                    <input v-on:change="parseDonate" type="file"/>
+                    <strong>{{ csvDonate.data.length > 0 ? csvDonate.data.length-1 : 0 }}</strong>
+                </form>
+            </div>
         </div>
-        <div v-if="codes.length > 0">
-            <h3>Codes</h3>
+        <div class="section section-output" v-if="codes.length > 0">
+            <h2>Results</h2>
             <table>
                 <tr>
                     <th>Code</th><th>Count</th><th></th>
@@ -32,10 +62,6 @@
                     <td>{{code.id}}</td><td>{{code.count}}</td><td><button v-on:click="removeCode(code)">-</button></td>
                 </tr>
             </table>
-        </div>
-        <div>
-            <h3>Store Orders Data</h3>
-            <input v-on:change="parseStore" type="file">
         </div>
     </div>
 
@@ -49,9 +75,13 @@
                     codes:[],
                     counts:[]
                 },
+                csvDonate:{
+                    data:[],
+                    code:false
+                },
                 codes:[],
                 user:{
-                    code:"14109USB"
+                    code:""
                 }
             };
         },
@@ -68,7 +98,7 @@
                     this.codes[i].count = 0;
                 }
 
-                // re-collect the counts from the data
+                // re-collect the counts from the store data
                 for(i=1; i<this.csvStore.data.length; i++)
                 {
                     row = this.csvStore.data[i];
@@ -76,7 +106,7 @@
                     //for each product code field in the row...
                     for(j=0; j<this.csvStore.codes.length; j++)
                     {
-                        cellCode = row[ this.csvStore.codes[j] ];
+                        cellCode = row[ this.csvStore.codes[j] ].toUpperCase();
 
                         // see if it has a code we are looking for..
                         for(k=0; k<this.codes.length; k++)
@@ -93,14 +123,46 @@
                         }
                     }
                 }
+            
+                // re-collect the counts from the donate data
+                for(i=1; i<this.csvDonate.data.length; i++)
+                {
+                    cellCode = this.csvDonate.data[i][this.csvDonate.code].toUpperCase();
+                    for(j=0; j<this.codes.length; j++)
+                    {
+                        code = this.codes[j];
+                        // if it has one of the codes we want...
+                        if(code.id == cellCode)
+                        {
+                            code.count++;
+                            break;
+                        }
+                    }
+                }
+            
             },
             addCode()
             {
-                console.log(this.user.code);
+                this.user.code = this.user.code.toUpperCase();
+                if(this.user.code == "")
+                {
+                    return;
+                }
+
+                var i;
+                for(i=0; i<this.codes.length; i++)
+                {
+                    if(this.codes[i].id == this.user.code)
+                    {
+                        alert("Code "+this.user.code+" already used");
+                        return;
+                    }
+                }
                 this.codes.push({
                     id:this.user.code,
                     count:0
                 });
+
                 this.greatReset();
             },
             removeCode(inCode)
@@ -119,6 +181,8 @@
             {
                 let parseDone = results =>
                 {
+                    var i, cell;
+
                     this.csvStore.data = results.data;
                     this.csvStore.columns = [];
 
@@ -139,6 +203,32 @@
                 
                 };
 
+                Papa.parse(inEvent.target.files[0], {complete:parseDone});
+            },
+            parseDonate(inEvent)
+            {
+                ///////////////////////////////////////
+                let parseDone = results =>
+                {
+                    var i, cell;
+
+                    this.csvDonate.data = results.data;
+                    this.csvDonate.columns = [];
+
+                    for(i=0; i<results.data[0].length; i++)
+                    {
+                        cell = results.data[0][i];
+                        switch(cell.toLowerCase())
+                        {
+                            case "product number" :
+                                this.csvDonate.code = i;
+                                return;
+                        }
+                    }
+                
+                    this.greatReset();
+                
+                };
                 Papa.parse(inEvent.target.files[0], {complete:parseDone});
             }
         }
