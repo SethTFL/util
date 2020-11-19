@@ -27,6 +27,7 @@
     </style>
 </head>
 <body>
+    <p><small>v 1.0.0</small></p>
     <div id="app">
         <div class="section section-input">
             <h2>Setup</h2>
@@ -115,7 +116,7 @@
                             {
                                 code = this.codes[k];
                                 // if it has one of the codes we want...
-                                if(code.id)
+                                if(code.id == cellCode)
                                 {
                                     // tally up with the matchng quantity column
                                     cellCount = parseInt(row[ this.csvStore.counts[j] ]);
