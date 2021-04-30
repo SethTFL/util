@@ -34,6 +34,24 @@
                 font-family:monospace;
                 line-height: 1.5em;
             }
+            dd .Range
+            {
+                display:inline-block;
+                position:relative;
+                margin:2px;
+                padding:2px;
+                border:1px solid black;
+                border-bottom: none;
+                border-right:none;
+            }
+            dd .Range .Delete
+            {
+                position:absolute;
+                top:-50%;
+                left:100%;
+                background:black;
+                color:white;
+            }
             button
             {
                 padding:3px 10px 3px 10px;
@@ -46,6 +64,12 @@
             button:hover
             {
                 background:#555;
+            }
+            button.Disabled
+            {
+                background:grey;
+                color:black;
+                cursor:default;
             }
             .Stage
             {
@@ -84,6 +108,16 @@
                 padding:3px;
                 background:#a00;
             }
+            .Stage [data-footnote]
+            {
+                background:#eed5fc;
+                padding:6px;
+            }
+            .Stage [data-footnote='bad']
+            {
+                background:black;
+                color:white;
+            }
             fieldset
             {
                 display:inline;
@@ -105,7 +139,7 @@
             <dd>
                 <span> Editor:</span>
                 <span>
-                    <button class="Transfer DOM" onclick="ToDOM()">DOM Objects Editor</button>
+                    <button class="Transfer DOM" onclick="HistoryStore(ToDOM)">DOM Objects Editor</button>
                 </span>
             </dd>
             <dd>
@@ -113,7 +147,7 @@
                 <span>
                     <button onclick="FixNewlines()">Remove Empty Lines</button>
                     &nbsp;
-                    <input type="text" class="FAR Find"/>
+                    <input type="text" class="FAR Find" value="&amp;nbsp;"/>
                     <button onclick="FixCustom()">Becomes ⇝</button>
                     <input type="text" class="FAR Replace"/>
                     &nbsp;
@@ -132,10 +166,14 @@
                 </span>
             </dd>
             <dd>
+                <span> History:</span><span class="History Stages"></span>
+            </dd>
+            <dd>
                 <span> Document:</span>
                 <span>
                     <button onclick="FixTitles()">Convert P+Strong to H2</button>
                     <button onclick="FixFootnotes()">Re-link Footnotes</button>
+                    <button onclick="HistoryStore(FixCruft)">Prune</button>
                 </span>
             </dd>
             <dd>
@@ -148,7 +186,7 @@
                 </span>
                 <span> Pullquote:</span>
                 <span>
-                    <button onclick="QuotePullCreate()" title="Copy Text as Pullquote">&boxbox;</button>
+                    <button onclick="HistoryStore(QuotePullCreate)" title="Copy Text as Pullquote">&boxbox;</button>
                     <button onclick="QuotePullMove(false)" title="Move Pullquote Up">&UpTeeArrow;</button>
                     <button onclick="QuotePullMove(true)" title="Move Pullquote Down">&DownTeeArrow;</button>
                     <button onclick="QuotePullSpread()" title="Redistribute Pullquotes">&UpArrowDownArrow;</button>
@@ -167,14 +205,84 @@
                 <div onmouseup="SelectionCreate()" class="Stage" style="max-height:600px; overflow-y:scroll;"></div>
             </dd>
         </dl>
-        <script>
+<script>
 var PanelHTML = document.querySelector(".Editor.HTML");
 var PanelDOM = document.querySelector(".Editor.DOM");
 var StageHTML = document.querySelector(".Editor.HTML .Stage");
 var StageDOM = document.querySelector(".Editor.DOM .Stage");
 var FARFind = document.querySelector(".FAR.Find");
 var FARReplace = document.querySelector(".FAR.Replace");
+</script>
+<script>
 var Selection = {};
+//// store function //////////////////////////
+var History = [];
+var HistoryActive = false;
+var HistoryArea = document.querySelector(".History.Stages");
+function HistoryStore(inFunc, ...args)
+{
+    var i;
+    var state;
+    var buttons;
+
+    state =
+    {
+        HTML:"",
+        Func:inFunc,
+        Args:args
+    };
+    state.Func(...state.Args);
+    SelectionRemove();
+    for(i=0; i<StageDOM.childNodes.length; i++)
+    {
+        state.HTML += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
+    }
+    HistoryActive = History.length;
+    History.push(state);
+    HistoryRender();
+}
+function HistoryRecall(inIndex)
+{
+    var match;
+    match = History[inIndex];
+    if(match)
+    {
+        HistoryActive = inIndex;
+        StageDOM.innerHTML = match.HTML;
+    }
+    HistoryRender();
+}
+function HistoryPrune()
+{
+    History = History.slice(0, HistoryActive+1);
+    HistoryRender();
+}
+function HistoryRender()
+{
+    let htmlStart = `<span class="Range">`;
+    let htmlButtons = ``;
+    let htmlEnd = `</span>`;
+    for(let i=0; i<History.length; i++)
+    {
+        if(i!==HistoryActive)
+        {
+            htmlButtons += `<button onclick="HistoryRecall(${i})">${History[i].Func.name}</button> `;
+        }
+        else
+        {
+            htmlButtons += `<button class="Disabled">${History[i].Func.name}</button> `;
+            if(HistoryActive !== History.length-1)
+            {
+                htmlButtons += htmlStart;
+                htmlStart = ``;
+                htmlEnd = `<button class="Delete" onclick="HistoryPrune()">delete</button>`+htmlEnd;
+            }
+        }
+    }
+    HistoryArea.innerHTML = htmlButtons + htmlStart + htmlEnd;
+}
+</script>
+<script>
 //// utility functions ///////////////////////
 function Iterate(inSelector, inProcessor)
 {
@@ -435,7 +543,6 @@ function QuotePullMove(inDirection)
             reference = quote.previousElementSibling;
         }
         StageDOM.insertBefore(quote, reference);
-
         SelectionEmulateUser(quote);
     }
 }
@@ -519,7 +626,11 @@ function FootnoteRemove(andPull)
 
             quote = document.createElement("h6");
             quote.innerHTML = text.substring(text.indexOf("“")+1, text.indexOf("”"));
+            StageDOM.insertBefore(document.createTextNode(`
+`), otherA.parentNode);
             StageDOM.insertBefore(quote, otherA.parentNode);
+            StageDOM.insertBefore(document.createTextNode(`
+`), otherA.parentNode);
         }
 
         otherA.parentNode.removeChild(otherA);
@@ -595,12 +706,14 @@ function FixFootnotes()
             if(quoteEnd != -1)
             {
                 anchors[0].innerHTML = anchors[0].getAttribute("name") + " - OK";
+                inParagraph.setAttribute("data-footnote", "good");
                 inParagraph.innerHTML = anchors[0].outerHTML + " “" + contents.substring(quoteStart+1, quoteEnd) + "”";
                 return true;
             }
         }
         inParagraph.appendChild(anchors[0]);
         anchors[0].innerHTML = anchors[0].getAttribute("name") + " - FIX";
+        inParagraph.setAttribute("data-footnote", "bad");
         return false;
     }
 
@@ -608,6 +721,35 @@ function FixFootnotes()
     Iterate("a[href*='#_ftn']", ProcessCopy)
     Iterate("a[href*='#_msoanchor']", ProcessFootnote);
     Iterate("a[href*='#_msocom']", ProcessCopy);
+}
+function FixCruft()
+{
+    var pIntro, pNext, hrs
+    
+    pIntro = StageDOM.querySelector("p");
+    pNext = pIntro.nextElementSibling;
+    if(pIntro.innerHTML.indexOf("#") != -1 && pIntro.innerHTML.indexOf("<strong") != -1)
+    {
+        StageDOM.removeChild(pIntro);
+    }
+    if(pNext.innerHTML == "&nbsp;")
+    {
+        StageDOM.removeChild(pNext);
+    }
+
+    hrs = StageDOM.querySelectorAll("hr");
+    if(hrs)
+    {
+        pNext = hrs[0].previousElementSibling;
+        if(pNext.innerHTML == "&nbsp;")
+        {
+            StageDOM.removeChild(pNext);
+        }
+        if(hrs.length > 1)
+        {
+            StageDOM.removeChild(hrs[1]);
+        }
+    }
 }
 
 function FixNewlines()
