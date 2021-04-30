@@ -27,6 +27,7 @@
     </style>
 </head>
 <body>
+    <p><small>v 1.0.0</small></p>
     <div id="app">
         <div class="section section-input">
             <h2>Setup</h2>
@@ -106,19 +107,22 @@
                     //for each product code field in the row...
                     for(j=0; j<this.csvStore.codes.length; j++)
                     {
-                        cellCode = row[ this.csvStore.codes[j] ].toUpperCase();
-
-                        // see if it has a code we are looking for..
-                        for(k=0; k<this.codes.length; k++)
+                        cellCode = row[ this.csvStore.codes[j] ];
+                        if(cellCode)
                         {
-                            code = this.codes[k];
-                            // if it has one of the codes we want...
-                            if(code.id == cellCode)
+                            cellCode = cellCode.toUpperCase();
+                            // see if it has a code we are looking for..
+                            for(k=0; k<this.codes.length; k++)
                             {
-                                // tally up with the matchng quantity column
-                                cellCount = parseInt(row[ this.csvStore.counts[j] ]);
-                                code.count += cellCount;
-                                break;
+                                code = this.codes[k];
+                                // if it has one of the codes we want...
+                                if(code.id == cellCode)
+                                {
+                                    // tally up with the matchng quantity column
+                                    cellCount = parseInt(row[ this.csvStore.counts[j] ]);
+                                    code.count += cellCount;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -127,15 +131,19 @@
                 // re-collect the counts from the donate data
                 for(i=1; i<this.csvDonate.data.length; i++)
                 {
-                    cellCode = this.csvDonate.data[i][this.csvDonate.code].toUpperCase();
-                    for(j=0; j<this.codes.length; j++)
+                    cellCode = this.csvDonate.data[i][this.csvDonate.code];
+                    if(cellCode)
                     {
-                        code = this.codes[j];
-                        // if it has one of the codes we want...
-                        if(code.id == cellCode)
+                        cellCode = cellCode.toUpperCase();
+                        for(j=0; j<this.codes.length; j++)
                         {
-                            code.count++;
-                            break;
+                            code = this.codes[j];
+                            // if it has one of the codes we want...
+                            if(code.id == cellCode)
+                            {
+                                code.count++;
+                                break;
+                            }
                         }
                     }
                 }
