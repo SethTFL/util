@@ -34,24 +34,50 @@
                 font-family:monospace;
                 line-height: 1.5em;
             }
-            dd .Range
+            .Range
             {
                 display:inline-block;
                 position:relative;
                 margin:2px;
                 padding:2px;
                 border:1px solid black;
-                border-bottom: none;
-                border-right:none;
             }
-            dd .Range .Delete
+            .Range.Before
             {
-                position:absolute;
-                top:-50%;
-                left:100%;
+                border-left:none;
+                border-bottom: none;
+            }
+            .Range.After
+            {
+                border-right:none;
+                border-bottom: none;
+            }
+            .Range.Current
+            {
+                border:none;
+            }
+            .Range .Delete
+            {
+                display:inline-block;
                 background:black;
                 color:white;
+                font-weight:900;
+                font-size:10px;
+                text-transform:uppercase;
             }
+            .Range .Delete:hover
+            {
+                color:red;
+            }
+            .Range .Active
+            {
+                background:lightgrey;
+                color:black;
+                font-weight:900;
+                cursor: default;
+                font-size:10px;
+            }
+
             button
             {
                 padding:3px 10px 3px 10px;
@@ -64,12 +90,6 @@
             button:hover
             {
                 background:#555;
-            }
-            button.Disabled
-            {
-                background:grey;
-                color:black;
-                cursor:default;
             }
             .Stage
             {
@@ -166,7 +186,7 @@
                 </span>
             </dd>
             <dd>
-                <span> History:</span><span class="History Stages"></span>
+                <span> History:</span><span class="History"></span>
             </dd>
             <dd>
                 <span> Document:</span>
@@ -218,7 +238,7 @@ var Selection = {};
 //// store function //////////////////////////
 var History = [];
 var HistoryActive = false;
-var HistoryArea = document.querySelector(".History.Stages");
+var HistoryArea = document.querySelector("dd .History");
 function HistoryStore(inFunc, ...args)
 {
     var i;
@@ -251,34 +271,60 @@ function HistoryRecall(inIndex)
     }
     HistoryRender();
 }
-function HistoryPrune()
-{
-    History = History.slice(0, HistoryActive+1);
+function HistoryPrune(inDeleteBefore)
+{   
+    if(inDeleteBefore)
+    {
+        History = History.slice(HistoryActive);
+        HistoryActive = 0;
+    }
+    else
+    {
+        History = History.slice(0, HistoryActive+1);
+    }
     HistoryRender();
 }
 function HistoryRender()
 {
-    let htmlStart = `<span class="Range">`;
-    let htmlButtons = ``;
-    let htmlEnd = `</span>`;
-    for(let i=0; i<History.length; i++)
+    var buttonsBefore, buttonsAfter;
+    var i;
+    
+    let renderButtonHistory = (inOutput, inIndex) =>
     {
-        if(i!==HistoryActive)
-        {
-            htmlButtons += `<button onclick="HistoryRecall(${i})">${History[i].Func.name}</button> `;
-        }
-        else
-        {
-            htmlButtons += `<button class="Disabled">${History[i].Func.name}</button> `;
-            if(HistoryActive !== History.length-1)
-            {
-                htmlButtons += htmlStart;
-                htmlStart = ``;
-                htmlEnd = `<button class="Delete" onclick="HistoryPrune()">delete</button>`+htmlEnd;
-            }
-        }
+        return inOutput = inOutput + `<button onclick="HistoryRecall(${inIndex})">${History[inIndex].Func.name}</button> `;
     }
-    HistoryArea.innerHTML = htmlButtons + htmlStart + htmlEnd;
+    let renderButtonDelete = (inOutput, inBefore) =>
+    {
+        let button = ` <button class="Delete" onclick="HistoryPrune(${inBefore})">Purge</button> `;
+        if(inBefore){ return button + inOutput; }
+                else{ return inOutput + button; }
+    };
+
+    buttonsBefore = ``;
+    for(i=0; i<HistoryActive; i++)
+    {
+        buttonsBefore = renderButtonHistory(buttonsBefore, i);
+    }
+    if(HistoryActive > 0)
+    {
+        buttonsBefore = renderButtonDelete(buttonsBefore, true);
+    }
+
+    buttonsAfter = ``;
+    for(i=HistoryActive+1; i<History.length; i++)
+    {
+        buttonsAfter = renderButtonHistory(buttonsAfter, i);
+    }
+    if(HistoryActive < History.length-1)
+    {
+        buttonsAfter = renderButtonDelete(buttonsAfter, false);
+    }
+
+    HistoryArea.innerHTML = `
+    <span class="Range Before" >${buttonsBefore} </span>
+    <span class="Range Current"><button class="Active">${History[HistoryActive].Func.name}</button></span>
+    <span class="Range After"  >${buttonsAfter}  </span>
+    `;
 }
 </script>
 <script>
