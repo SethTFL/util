@@ -34,6 +34,21 @@
                 font-family:monospace;
                 line-height: 1.5em;
             }
+
+            button
+            {
+                padding:3px 10px 3px 10px;
+                border:none;
+                border-radius:3px;
+                cursor:pointer;
+                background:#099cc9;
+                color:#fff;
+            }
+            button:hover
+            {
+                background:#555;
+            }
+
             .Range
             {
                 display:inline-block;
@@ -56,41 +71,30 @@
             {
                 border:none;
             }
-            .Range .Delete
+            .Range button
+            {
+                font-size:8px;
+            }
+            .Range button.Delete
             {
                 display:inline-block;
                 background:black;
                 color:white;
                 font-weight:900;
-                font-size:10px;
                 text-transform:uppercase;
             }
-            .Range .Delete:hover
+            .Range button.Delete:hover
             {
                 color:red;
             }
-            .Range .Active
+            .Range button.Active
             {
                 background:lightgrey;
                 color:black;
                 font-weight:900;
                 cursor: default;
-                font-size:10px;
             }
 
-            button
-            {
-                padding:3px 10px 3px 10px;
-                border:none;
-                border-radius:3px;
-                cursor:pointer;
-                background:#099cc9;
-                color:#fff;
-            }
-            button:hover
-            {
-                background:#555;
-            }
             .Stage
             {
                 min-height:200px;
@@ -138,11 +142,13 @@
                 background:black;
                 color:white;
             }
-            fieldset
+
+            .HTML .Stage
             {
-                display:inline;
-                padding:5px;
+                background:black;
+                color:white;
             }
+
             .FAR
             {
                 width:80px;
@@ -157,7 +163,7 @@
     <body onload="ToHTML()">
         <dl class="Editor HTML">
             <dd>
-                <span> Editor:</span>
+                <span> Switch Editor:</span>
                 <span>
                     <button class="Transfer DOM" onclick="HistoryStore(ToDOM)">DOM Objects Editor</button>
                 </span>
@@ -174,13 +180,13 @@
                 </span>
             </dd>
             <dd>
-                <textarea class="Stage" style="width:100%; white-space:nowrap;">
+                <textarea class="Stage" style="width:80vw; height:60vh; white-space:nowrap;">
                 </textarea>
             </dd>
         </dl>
         <dl class="Editor DOM">
             <dd>
-                <span> Editor:</span>
+                <span> Switch Editor:</span>
                 <span>
                     <button onclick="ToHTML()">HTML String Editor</button>
                 </span>
@@ -213,7 +219,7 @@
                 </span>
                 <span> Footnote:</span>
                 <span>
-                    <button onclick="HistoryStore(FootnoteRemove, false)" title="Safely Delete Footnotes (Removes in-copy reference and the deletes footnote)">🗑</button>
+                    <button onclick="HistoryStore(FootnoteRemove, false)" title="Safely Delete Footnotes (Removes in-copy reference and the deletes footnote)">🧹</button>
                     <button onclick="HistoryStore(FootnoteRemove, true)" title="Convert Footnotes into Pullquotes (Requires re-linked footnotes, uses quotation marks)">☝</button>
                 </span>
                 <span> Any:</span>
@@ -257,7 +263,6 @@ function HistoryStore(inFunc, ...args)
     }
     HistoryActive = History.length;
     History.push(state);
-    History = History.slice(-10);
     HistoryRender();
 }
 function HistoryRecall(inIndex)
@@ -291,11 +296,11 @@ function HistoryRender()
     
     let renderButtonHistory = (inOutput, inIndex) =>
     {
-        return inOutput = inOutput + `<button onclick="HistoryRecall(${inIndex})">${History[inIndex].Func.name}</button> `;
+        return inOutput = inOutput + `<button title="Go to this point" onclick="HistoryRecall(${inIndex})">${History[inIndex].Func.name}</button> `;
     }
     let renderButtonDelete = (inOutput, inBefore) =>
     {
-        let button = ` <button class="Delete" onclick="HistoryPrune(${inBefore})">Purge</button> `;
+        let button = ` <button class="Delete" title="Purge ${inBefore ? `Undo` : `Redo` } History" onclick="HistoryPrune(${inBefore})">🗙</button> `;
         if(inBefore){ return button + inOutput; }
                 else{ return inOutput + button; }
     };
@@ -322,7 +327,7 @@ function HistoryRender()
 
     HistoryArea.innerHTML = `
     <span class="Range Before" >${buttonsBefore} </span>
-    <span class="Range Current"><button class="Active">${History[HistoryActive].Func.name}</button></span>
+    <span class="Range Current"><button title="Active History Point" class="Active">${History[HistoryActive].Func.name}</button></span>
     <span class="Range After"  >${buttonsAfter}  </span>
     `;
 }
@@ -500,6 +505,7 @@ function GeneralElementsCompress()
         StageDOM.removeChild(Selection.Across[i]);
     }
     p.innerHTML = text.join("<br>");
+    SelectionEmulateUser(p);
 }
 function GeneralElementsExpand()
 {
