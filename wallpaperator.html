@@ -1,0 +1,502 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://unpkg.com/vue@2.6.13/dist/vue.js"></script>
+    <script>
+        BBNew = function(inTop, inLeft, inWidth, inHeight)
+        {
+            return { top:inTop, left:inLeft, width:inWidth, height:inHeight };
+        };
+        BBGet = function(inElement) 
+        {
+            return { top:0, left:0, width:inElement.clientWidth, height:inElement.clientHeight };
+        };
+        BBSet = function(inElement, inBB)
+        {
+            inElement.style.width  = inBB.width  +"px";
+            inElement.style.height = inBB.height +"px";
+            inElement.style.top    = inBB.top    +"px";
+            inElement.style.left   = inBB.left   +"px";
+            return inBB;
+        };
+        BBUse = function(inBB){
+            return { top:inBB.top, left:inBB.left, width:inBB.width, height:inBB.height };
+        };
+        Scale = function(inElement, inScale)
+        {
+            inElement.width  = inScale[0];
+            inElement.height = inScale[1];
+            return inElement;
+        };
+        Align = function(inElement, inParent, inH, inV) // shift within the overflow
+        {
+            inElement.left = inParent.left + (inParent.width -  inElement.width )*inH;
+            inElement.top  = inParent.top + (inParent.height - inElement.height)*inV;
+            return inElement;
+        };
+        Cover = function(inElement, inParent, inCover)
+        {
+            let ratioElement = inElement.width / inElement.height;
+            let ratioParent = inParent.width / inParent.height;
+        
+            let fillWidth = () => {
+                inElement.width  = inParent.width;
+                inElement.height = inParent.width / ratioElement;
+            }
+            let fillHeight = () => {
+                inElement.height = inParent.height;
+                inElement.width  = inParent.height * ratioElement;
+            }
+        
+            if((ratioParent >= ratioElement))
+            {
+                inCover ? fillWidth() : fillHeight();
+            }
+            else
+            {
+                inCover ? fillHeight() : fillWidth();
+            }
+            return inElement;
+        };
+        Limit = function(inElement, inWidth, inHeight)
+        {
+            let max = BBNew(0, 0,
+                Math.min(inElement.width, inWidth),
+                Math.min(inElement.height, inHeight)
+            );
+            Cover(inElement, max, false);
+            return max;
+        };
+        Upper = function(inElement, inParent, inTop, inRight, inBottom, inLeft)
+        {
+            let gapT = inElement.top - inParent.top;
+            let gapL = inElement.left - inParent.left;
+            let gapR = (inParent.left+inParent.width) - (inElement.left+inElement.width);
+            let gapB = (inParent.top+inParent.height) - (inElement.top+inElement.height);
+         
+            let overT = (gapT > inTop)    ? gapT-inTop    : 0;
+            let overR = (gapR > inRight)  ? gapR-inRight  : 0;
+            let overB = (gapB > inBottom) ? gapB-inBottom : 0;
+            let overL = (gapL > inLeft)   ? gapL-inLeft   : 0;
+        
+            let grow = BBUse(inElement);
+            Inset(grow, -overT, -overR, -overB, -overL);
+            Cover(inElement, grow, false);
+            return grow;
+        }
+        Inset = function(inElement, inT, inR, inB, inL)
+        {
+            inElement.top += inT;
+            inElement.left += inL;
+            inElement.width -= (inL+inR);
+            inElement.height -= (inT+inB);
+            return inElement;
+        };
+        Build = function(inClipBounds, inBackBounds, inBackAlign, inForeBounds, inForeAlign, inForeInset, inForeMaxSize, inForeMaxSpace)
+        {
+            let cloneClip = BBUse(inClipBounds);
+            let cloneBack = BBUse(inBackBounds);
+            let cloneFore = BBUse(inForeBounds);
+        
+            /* background */
+            Cover(cloneBack, cloneClip, true);
+            Align(cloneBack, cloneClip, inBackAlign[0], inBackAlign[1]);
+        
+            /* foreground */
+            // outer limit
+            let outer = Inset(BBUse(cloneClip),  inForeInset[0],    inForeInset[1],    inForeInset[2],    inForeInset[3]   );
+            // inner limit
+            let inner = Inset(BBUse(outer),  inForeMaxSpace[0], inForeMaxSpace[1], inForeMaxSpace[2], inForeMaxSpace[3]);
+            // lower limit
+            let lower = BBUse(cloneFore);
+            Cover(lower, outer, false);
+            lower = Limit(lower, inForeMaxSize[0], inForeMaxSize[1])
+            Align(lower, outer, inForeAlign[0], inForeAlign[1]);
+            // upper limit
+            let upper = BBUse(lower);
+            if(inner.width > 0 || inner.height > 0)
+            {
+                var delta;
+                delta = upper.left - inner.left;
+                if(delta > 0)
+                {
+                    upper.left -= delta;
+                    upper.width += delta;
+                }
+                delta = upper.top - inner.top;
+                if(delta > 0)
+                {
+                    upper.top -= delta;
+                    upper.height += delta;
+                }
+                delta = (inner.left+inner.width) - (upper.left+upper.width);
+                if(delta > 0)
+                {
+                    upper.width += delta;
+                }
+                delta = (inner.top+inner.height) - (upper.top+upper.height);
+                if(delta > 0)
+                {
+                    upper.height += delta;
+                }
+            }
+            Cover(cloneFore, upper, false);
+            Align(cloneFore, upper, inForeAlign[0], inForeAlign[1]);
+        
+            // for the debug display of inner, dont show it with negative dimensions
+            inner.width = Math.max(inner.width, 0);
+            inner.height = Math.max(inner.height, 0);
+        
+            return {
+                clip:cloneClip,
+                back:cloneBack,
+                fore:cloneFore,
+                debug:{
+                    outer:outer,
+                    inner:inner,
+                    lower:lower,
+                    upper:upper,
+                }
+            };
+        };
+    </script>
+    <style>
+        body
+        {
+            margin:0;
+        }
+        #Editor
+        {
+            display:inline-block;
+            vertical-align: middle;
+            box-sizing: border-box;
+            position:relative;
+            width:18%;
+            font-size:11px;
+            font-family:sans-serif;
+        }
+        .Section
+        {
+            padding:10px;
+        }
+        h3
+        {
+            background:grey;
+            color:white;
+            display:inline-block;
+            padding:5px 10px 5px 10px;
+            border-radius:10px;
+        }
+        label
+        {
+            display:inline-block;
+            width:30%;
+            padding-left:5%;
+        }
+        input
+        {
+            display:inline-block;
+            width:60%;
+        }
+
+        #Output
+        {
+            display:block;
+            position:fixed;
+            top:0;
+            right:0;
+            box-sizing: border-box;
+            width:80%;
+            height:100%;
+        }
+        canvas
+        {
+            position:relative;
+            display:block;
+            max-width:100%;
+            max-height:100%;
+            margin:0 auto;
+            box-shadow:0px 0px 10px black;
+        }
+    </style>
+</head>
+
+<div id="App">
+    <div id="Editor">
+        <div class="Section">
+            <h3>Preview</h3>
+            <h4>Sizes</h4>
+            <button v-for="size in settings.size" v-on:click="Resize(size[0], size[1]); settings.sizeActive=size;" v-html="size[2]"></button>
+            <h4>Custom</h4>
+            <label>Width </label><input v-model="settings.clip.scale[0]" type="range" min="100" max="3000"/>
+            <label>Height</label><input v-model="settings.clip.scale[1]" type="range" min="100" max="3000"/>
+            <h4>Debug</h4>
+            <label>space</label>
+            <input type="checkbox" v-model="settings.show.space"/>
+            <label>upper</label>
+            <input type="checkbox" v-model="settings.show.upper"/>
+            <label>lower</label>
+            <input type="checkbox" v-model="settings.show.lower"/>
+            <label>final</label>
+            <input type="checkbox" v-model="settings.show.final"/>
+        </div>
+        <div class="Section">
+            <h3>Foreground</h3>
+            <div>
+                <h4>Image</h4>
+                <label>File</label><input type="file" v-on:change="LoadImage(settings.fore, $event.target.files[0])" />
+                <h4>Align</h4>
+                <label>X</label><input v-model="settings.fore.align[0]" type="range" min="0.0" max="1.0" step="0.05"/>
+                <label>Y</label><input v-model="settings.fore.align[1]" type="range" min="0.0" max="1.0" step="0.05"/>
+                <h4>Limit</h4>
+                <label>Width </label><input v-model.number="settings.fore.limit[0]" type="number" min="100" max="800"/>
+                <label>Height</label><input v-model.number="settings.fore.limit[1]" type="number" min="100" max="800"/>
+            </div>
+        </div>
+        <div class="Section">
+            <h3>Background</h3>
+            <h4>Image</h4>
+            <label>File</label><input type="file" v-on:change="LoadImage(settings.back, $event.target.files[0])" />
+            <h4>Align</h4>
+            <label>X</label><input v-model="settings.back.align[0]" type="range" min="0.0" max="1.0" step="0.05"/>
+            <label>Y</label><input v-model="settings.back.align[1]" type="range" min="0.0" max="1.0" step="0.05"/>
+        </div>
+        <div class="Section">
+            <h3>Inset Limits</h3>
+            <h4>Upper</h4>
+            <label>Top   </label><input v-model.number="settings.fore.inset[0]" type="number" min="0.0" max="2000"/>
+            <label>Right </label><input v-model.number="settings.fore.inset[1]" type="number" min="0.0" max="2000"/>
+            <label>Bottom</label><input v-model.number="settings.fore.inset[2]" type="number" min="0.0" max="2000"/>
+            <label>Left  </label><input v-model.number="settings.fore.inset[3]" type="number" min="0.0" max="2000"/>
+            <h4>Lower</h4>
+            <label>Top   </label><input v-model.number="settings.fore.space[0]" type="number" min="0.0" max="2000"/>
+            <label>Right </label><input v-model.number="settings.fore.space[1]" type="number" min="0.0" max="2000"/>
+            <label>Bottom</label><input v-model.number="settings.fore.space[2]" type="number" min="0.0" max="2000"/>
+            <label>Left  </label><input v-model.number="settings.fore.space[3]" type="number" min="0.0" max="2000"/>
+        </div>
+        <div class="Section">
+            <h3>Generate</h3>
+            <h4>All</h4>
+            <input type="text" v-model="settings.name"/><span>_XXXX.jpg</span>
+            <button v-on:click="DownloadAll">Go</button>
+            <h4>Single</h4>
+            <span v-html="settings.name"></span>_<span v-html="settings.sizeActive[2]"></span>
+            <button v-on:click="Download(settings.name+'_'+settings.sizeActive[2])">Go</button>
+        </div>
+    </div>
+    <div id="Output">
+        <canvas ref="canvas"></canvas>
+    </div>
+</div>
+
+<script>
+let app =
+{
+    el:"#App",
+    data:function()
+    {
+        let output =
+        {
+            settings:
+            {
+                clip:
+                {
+                    bound:{},
+                    image:false,
+                    scale:[1024, 768]
+                },
+                back:
+                {
+                    bound:{},
+                    image:false,
+                    align:[0.5, 0.5]
+                },
+                fore:
+                {
+                    bound:{},
+                    image:false,
+                    align:[0.5, 0.5],
+                    limit:[450, 450],
+                    inset:[20, 20, 20, 20],
+                    space:[500, 500, 500, 500],
+                },
+                show:
+                {
+                    space:true,
+                    upper:true,
+                    lower:true,
+                    final:true
+                },
+                size:
+                [
+                    [828,  1792, "iphone11"],
+                    [1080, 1920, "iphones_Ipodtouch"],
+                    [2732, 2048, "All_ipads"],
+                    [2560, 1600, "AmazonFire"],
+                    [3000, 2000, "MicrosoftSurface"],
+                    [1440, 2560, "AndroidPhones"],
+                    [938,   349, "FacebookTopBanner"],
+                    [1000,  650, "Facebook_BlogPost"],
+                    [1200, 1200, "Instagram"],
+                    [1024,  512, "Twitter"],
+                    [1024,  768, "1024x768"],
+                    [1280,  800, "1280x800"],
+                    [1366,  768, "1366x768"],
+                    [1440,  900, "1440x900"],
+                    [1920, 1080, "1920x1080"],
+                ],
+                sizeActive:[828,  1792, "iphone11"],
+                name:"wallpaper",
+                wait:false,
+            }
+        };
+        return output;
+    },
+    computed:
+    {
+        AllLoaded:function()
+        {
+            return (this.settings.fore.image && this.settings.back.image);
+        }
+    },
+    watch:
+    {
+        settings:
+        {
+            deep:true,
+            handler:function(){this.Redraw(this.settings);}
+        }
+    },
+    methods:
+    {
+        LoadImage:function(inContext, inFile)
+        {
+            var loadFile, loadImage;
+            loadFile = new FileReader();
+            loadImage = new Image();
+            loadFile.onload = function(e){loadImage.src = e.target.result;};
+            loadImage.onload = function(e)
+            {
+                inContext.image = loadImage;
+                inContext.bound = BBNew(0, 0, loadImage.width, loadImage.height);
+            };
+            loadFile.readAsDataURL(inFile);
+        },
+        Resize:function(inW, inH)
+        {
+            this.settings.clip.scale = [inW, inH];
+        },
+        Redraw:function(inSettings)
+        {
+            var sizes, context, debug;
+
+            Scale(inSettings.clip.image, inSettings.clip.scale);
+            Scale(inSettings.clip.bound, inSettings.clip.scale);
+
+            sizes = Build(
+                inSettings.clip.bound,
+                inSettings.back.bound,
+                inSettings.back.align,
+                inSettings.fore.bound,
+                inSettings.fore.align,
+                inSettings.fore.inset,
+                inSettings.fore.limit,
+                inSettings.fore.space
+            );
+
+            // setup drawing context
+            context = inSettings.clip.image.getContext("2d");
+            context.imageSmoothingQuality = "high";
+
+            // draw images
+            if(inSettings.back.image)
+            {
+                context.drawImage(inSettings.back.image, sizes.back.left, sizes.back.top, sizes.back.width, sizes.back.height);
+            }
+            if(inSettings.fore.image)
+            {
+                context.drawImage(inSettings.fore.image, sizes.fore.left, sizes.fore.top, sizes.fore.width, sizes.fore.height);
+            }
+
+            // draw debug values
+            debug = function(inBound, inColor, inWidth)
+            {
+                context.beginPath();
+                context.strokeStyle = inColor;
+                context.lineWidth = inWidth;
+                context.rect(inBound.left, inBound.top, inBound.width, inBound.height );
+                context.stroke();
+            }
+            if(inSettings.show.space)
+            {
+                debug(sizes.debug.outer, "red", 5);
+                debug(sizes.debug.inner, "red", 5);
+            }
+            if(inSettings.show.lower)
+            {
+                debug(sizes.debug.lower, "orange", 2);
+            }
+            if(inSettings.show.upper)
+            {
+                debug(sizes.debug.upper, "yellow", 2);
+            }
+            if(inSettings.show.final)
+            {
+                debug(sizes.fore, "black", 2);
+            }
+        },
+        Download:function(inName)
+        {
+            var link;
+            link = document.createElement('a');
+            link.download = inName+".jpg";
+            link.href = this.settings.clip.image.toDataURL("image/jpg").replace("image/jpg", "image/octet-stream");
+            link.click();
+        },
+        DownloadAll:function()
+        {
+            var index, output, context, download;
+
+            index = 0;
+            context = this;
+
+            if(this.settings.wait)
+            {
+                return;
+            }
+            this.settings.wait = true;
+            this.settings.show.space = false;
+            this.settings.show.upper = false;
+            this.settings.show.lower = false;
+            this.settings.show.final = false;
+
+            download = function()
+            {
+                context.Download(context.settings.name+"_"+context.settings.size[index][2]);
+                index++;
+                output();
+            };
+            output = function()
+            {
+                var size = context.settings.size[index];
+                if(!size)
+                {
+                    context.settings.wait = false;
+                    return;
+                }
+                context.Resize(size[0], size[1]);
+                context.$nextTick(function(){setTimeout(download, 300);});
+            }
+
+            output();
+        }
+    },
+    mounted:function()
+    {
+        this.settings.clip.image = this.$refs.canvas;
+        this.settings.clip.bound = BBGet(this.$refs.canvas);
+        this.settings.back.bound = BBGet(this.$refs.canvas);
+        this.settings.fore.bound = BBNew(0, 0, this.settings.fore.limit[0], this.settings.fore.limit[1]);
+    }
+};
+let App = new Vue(app);
+</script>
