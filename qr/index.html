@@ -9,45 +9,63 @@ body
     text-align:center;
     margin:100px;
 }
-input, svg
+input, svg, a
 {
     display:inline-block;
     box-sizing:border-box;
     width:500px;
+    font-size:25px;
+    font-family: 'Courier New', Courier, monospace;
+    text-align:center;
     margin:0 auto;
 }
 input
 {
     margin-bottom:20px;
-    font-size:25px;
     padding:5px;
 }
 svg
 {
     height:500px;
 }
+a
+{
+    margin-top:20px;
+    padding:5px;
+    color:white;
+    background:black;
+    text-decoration:none !important;
+}
 </style>
 </head>
 <body>
 <input id="input" value="http://tfl.org/qr-"/>
 <br>
-<svg><g id="output"/></svg>
+<span id="output"></span>
+<br>
+<a id="download" download="" href="">Download</a>
+<br>
+</body>
 <script>
-let domInput = document.querySelector("input");
-let domOutput = document.querySelector("g");
+let domInput = document.querySelector("#input");
+let domOutput = document.querySelector("#output");
+let domDownload = document.querySelector("#download");
 let qrCode = new QRCode(domOutput, {width : 100, height : 100, useSVG: true});
-let qrCodeCreate = () => qrCode.makeCode(domInput.value);
+let qrCodeCreate = () => 
+{
+    qrCode.makeCode(domInput.value);
+    document.querySelector("svg").setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    domDownload.href = URL.createObjectURL(new Blob(['<?xml version="1.0" standalone="no"?>\r\n', domOutput.innerHTML], {type:"image/svg+xml;charset=utf-8"}));
+    domDownload.download = domInput.value.substring( domInput.value.lastIndexOf("/")+1 )+".svg";
+}
 domInput.addEventListener("blur", qrCodeCreate);
 domInput.addEventListener("keyup", qrCodeCreate);
 if(window.location.search)
 {
-    qrCode.makeCode(window.location.search.substring(1));
-    domInput.remove();
+    domInput.value = window.location.search.substring(1)
 }
-else
-{
-    qrCodeCreate();
-}
+qrCodeCreate();
+
 </script>
 </body>
 </html>
