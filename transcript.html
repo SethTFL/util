@@ -200,6 +200,8 @@
                     <button onclick="HistoryStore(FixTitles)">Convert P+Strong to H2</button>
                     <button onclick="HistoryStore(FixFootnotes)">Re-link Footnotes</button>
                     <button onclick="HistoryStore(FixCruft)">Prune</button>
+                    |
+                    <button onclick="HistoryStore(FixMalformedCenter)">Fix Malformed: Center</button>
                 </span>
             </dd>
             <dd>
@@ -239,6 +241,13 @@ var StageDOM = document.querySelector(".Editor.DOM .Stage");
 var FARFind = document.querySelector(".FAR.Find");
 var FARReplace = document.querySelector(".FAR.Replace");
 </script>
+
+
+<script>
+
+</script>
+
+
 <script>
 var Selection = {};
 //// store function //////////////////////////
@@ -799,6 +808,61 @@ function FixCruft()
             StageDOM.removeChild(hrs[1]);
         }
     }
+}
+
+// see lessons for life vol 3
+function FixMalformedCenter()
+{
+    let ps = Array.from(document.querySelectorAll("p"));
+    let i;
+    let pPullquotes = [];
+
+    // collect pullquotes at the bottom of the page
+    for(i=ps.length-1; i>=0; i--)
+    {
+        if(ps[i].querySelector("a")){ break; }
+        pPullquotes.unshift(ps[i]);
+    }
+    // add a link to them
+    pPullquotes.forEach((p, i)=>
+    {
+        let key = `[pull-${i}]`;
+        p.innerHTML = `<a name="${key}">${key}</a>` + p.innerHTML;
+    })
+
+    // find the dividing hr
+    let GetIndex = el => Array.from(el.parentNode.children).indexOf(el);
+    let hr = document.querySelector("hr");
+    let hrIndex = GetIndex(hr);
+    console.log(hrIndex);
+
+    let as = Array.from(document.querySelectorAll("a"));
+    aFootnotesUpper = [];
+    aPullquotesUpper = [];
+    as.forEach(a=>
+    {
+        if(GetIndex(a.parentElement) > hrIndex)
+        {
+            return;
+        }
+        if(a.querySelector("sup"))
+        {
+            // is normal footnote
+            aFootnotesUpper.push(a);
+        }
+        else
+        {
+            // is pull quote
+            aPullquotesUpper.push(a);
+        }
+    });
+    aFootnotesUpper.forEach(a=>a.innerHTML = a.innerText);
+    aPullquotesUpper.forEach((a, i)=>
+    {
+        let key = `[pull-${i}]`;
+        a.innerHTML = key;
+        a.href = "#"+key;
+    });
 }
 
 function FixNewlines()
