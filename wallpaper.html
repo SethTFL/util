@@ -117,7 +117,7 @@ var update = function()
 {
     var str;
     str = elements.source.innerHTML;
-    str = str.split("{-path-}").join("_"+elements.inputPath.value+"/"+elements.inputPath.value+"_");
+    str = str.split("{-path-}").join(elements.inputPath.value);
     str = str.split("{-quote-}").join(elements.inputQuote.value);
     str = str.split("{-name-}").join(elements.inputName.value);
 
