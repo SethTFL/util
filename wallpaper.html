@@ -31,7 +31,7 @@
 <pre>
 <p>
     <img class="img-responsive banner"
-    src="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}facebook.jpg"
+    src="{-path-}facebook.jpg"
     alt="{-quote-} - {-name-}"
     title="{-quote-} - {-name-}"
     width="817"
@@ -45,8 +45,10 @@
 — {-name-}
 </p>
 <p><!--more--></p>
+
+<!--
 <p>
-    <a href="https://www.whatismyscreenresolution.com/" target="_blank">What is my screen resolution?</a>
+    <a href="https://www.whatismyscreenresolution.com/">What is my screen resolution?</a>
     <span id="resolution"></span>
 </p>
 <script>
@@ -54,61 +56,36 @@ try{
 document.querySelector("#resolution").innerHTML = parseInt(window.screen.width * window.devicePixelRatio) + " x " + parseInt(window.screen.height * window.devicePixelRatio);
 }catch(e){}
 </script>
+-->
+
 <h3>Click Below to Download your Image:</h3>
+<hr>
 <p>
-    <span style="text-decoration: underline;"><strong>Apple Devices:</strong></span>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}ios-iphone.jpg" target="_blank">iPhones and iPod Touch</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}ios-ipad.jpg" target="_blank">iPads</a>
-    <br/>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}ios-iphone-11.jpg" target="_blank">iPhone 11</a>
+    <strong style="text-decoration: underline;">Apple Devices:</strong><br>
+    <a target="_blank" href="{-path-}ipad.jpg">iPads</a><br>
+    <a target="_blank" href="{-path-}iphone.jpg">iPhones</a><br>
 </p>
 <hr>
 <p>
-    <span style="text-decoration: underline;"><strong>Android Phones:</strong></span>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}android.jpg" target="_blank">Galaxy S Series, Edge, Nexus 5X, 6P, Google Pixel, Pixel XL, LG G5, Windows Phones</a>
+    <strong style="text-decoration: underline;">Other Devices:</strong><br>
+    <a target="_blank" href="{-path-}android.jpg">Android Phones</a><br>
+    <a target="_blank" href="{-path-}amazon-fire.jpg">Amazon Fire</a><br>
+    <a target="_blank" href="{-path-}microsoft-surface.jpg">Microsoft Surface</a><br>
 </p>
 <hr>
 <p>
-    <span style="text-decoration: underline;"><strong>Tablets:</strong></span>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}amazon-fire.jpg" target="_blank">Amazon Fire</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}microsoft-surface.jpg" target="_blank">Microsoft Surface</a>
+    <strong style="text-decoration: underline;">Social Media</strong><br>
+    <a target="_blank" href="{-path-}facebook-banner.jpg">Facebook Banner</a><br>
+    <a target="_blank" href="{-path-}facebook.jpg">Facebook Post</a><br>
+    <a target="_blank" href="{-path-}twitter.jpg">Twitter Post</a><br>
+    <a target="_blank" href="{-path-}instagram.jpg">Instagram Post</a><br>
 </p>
 <hr>
 <p>
-    <span style="text-decoration: underline;"><strong>Social Media:</strong></span>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}facebook-banner.jpg" target="_blank">Facebook Header (Top Banner)</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}facebook.jpg" target="_blank">Facebook and Blog Posts</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}twitter.jpg" target="_blank">Twitter</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}instagram.jpg" target="_blank">Instagram</a>
+    <strong style="text-decoration: underline;">Desktop Computer</strong><br>
+    <a target="_blank" href="{-path-}1920x1080.jpg">Large</a><br>
+    <a target="_blank" href="{-path-}1280x1024.jpg">Small</a><br>
 </p>
-<hr>
-<p>
-    <span style="text-decoration: underline;"><strong>Computer Monitors:</strong></span>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1024x768.jpg" target="_blank">1024 x 768</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1280x800.jpg" target="_blank">1280 x 800</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1280x1024.jpg" target="_blank">1280 x 1024</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1366x768.jpg" target="_blank">1366 x 768</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1440x900.jpg" target="_blank">1440 x 900</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1600x900.jpg" target="_blank">1600 x 900</a>
-    <br>
-    <a href="https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/{-path-}1920x1080.jpg" target="_blank">1920 x 1080</a>
-</p>
-<p><span style="color: #999999;"><em>*List based on the top devices used on our website via our analytics.</em></span></p>
 </pre>
 
 <script>
@@ -125,7 +102,7 @@ var update = function()
 {
     var str;
     str = elements.source.innerHTML;
-    str = str.split("{-path-}").join(elements.inputPath.value);
+    str = str.split("{-path-}").join("https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/"+elements.inputPath.value+"/"+elements.inputPath.value+"-");
     str = str.split("{-quote-}").join(elements.inputQuote.value);
     str = str.split("{-name-}").join(elements.inputName.value);
 
