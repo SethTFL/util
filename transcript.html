@@ -265,7 +265,6 @@ function HistoryStore(inFunc, ...args)
         Args:args
     };
     state.Func(...state.Args);
-    SelectionRemove();
     for(i=0; i<StageDOM.childNodes.length; i++)
     {
         state.HTML += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
@@ -280,6 +279,7 @@ function HistoryRecall(inIndex)
     match = History[inIndex];
     if(match)
     {
+        SelectionRemove();
         HistoryActive = inIndex;
         StageDOM.innerHTML = match.HTML;
     }
@@ -353,26 +353,7 @@ function Iterate(inSelector, inProcessor)
         inProcessor(elements[i]);
     } 
 }
-function DOMSelection()
-{
-    var selection;
-    var pathStart, pathStop, pathBetween;
-    var output;
 
-    selection = window.getSelection();
-    output = {
-            Text: selection.toString(),
-              Up: FindStrand(selection.anchorNode, StageDOM),
-            Down: FindStrand(selection.focusNode, StageDOM),
-          Across: false
-    };
-    if(output.Up && output.Down)
-    {
-        output.Across = FindBetween(output.Up[0], output.Down[0]);
-    }
-    Selection = output;
-    return output;
-}
 function FindStrand(inElement, inRoot)
 {
     var list = [inElement];
@@ -473,12 +454,15 @@ function QuoteBlockCreate()
     {
         block.appendChild(Selection.Across[i]);
     }
+
+    SelectionCreate(block);
 }
 function QuoteBlockRemove()
 {
     var block;
     var i;
     var text;
+    
 
     if(!Selection.Across)
     {
@@ -486,13 +470,14 @@ function QuoteBlockRemove()
     }
         
     block = Selection.Across[0];
-    
+    const selection = [];
     while(block.firstChild)
     {
+        selection.push(block.firstChild);
         StageDOM.insertBefore(block.firstChild, block);
     }
     StageDOM.removeChild(block);
-
+    SelectionCreate(...selection);
 }
 function GeneralElementsCompress()
 {
@@ -527,7 +512,7 @@ function GeneralElementsCompress()
 
     const lineBreak = ` 
 `;
-
+    const selection = [];
     for(i=0; i<paragraphs.length; i++)
     {
         let p = document.createElement("p");
@@ -535,6 +520,7 @@ function GeneralElementsCompress()
 `;
         fragment.append(p);
         fragment.append(document.createTextNode(lineBreak));
+        selection.push(p);
     }
     
     StageDOM.insertBefore(fragment, Selection.Across[0]);
@@ -543,7 +529,7 @@ function GeneralElementsCompress()
         let current = Selection.Across[i];
         StageDOM.removeChild(current);
     }
-    
+    SelectionCreate(...selection);
 
     /*
     p = document.createElement("p");
@@ -558,7 +544,7 @@ function GeneralElementsCompress()
 
     p.innerHTML = text.join("<br>");
     */
-    //SelectionEmulateUser(fragment);
+    //SelectionCreate(fragment);
 }
 function GeneralElementsExpand()
 {
@@ -611,7 +597,7 @@ function QuotePullCreate()
     }
     quote.innerHTML = string;
     StageDOM.insertBefore(quote, Selection.Across[0]);
-    SelectionEmulateUser(quote);
+    SelectionCreate(quote);
 }
 function QuotePullRemove()/*unused*/
 {
@@ -648,7 +634,7 @@ function QuotePullMove(inDirection)
         }
         StageDOM.insertBefore(quote, reference);
         StageDOM.insertBefore(document.createTextNode('\n'), reference);
-        SelectionEmulateUser(quote);
+        SelectionCreate(quote);
     }
 }
 function QuotePullSpread()
@@ -921,14 +907,44 @@ function FixSpaceStrands()
 {
     StageHTML.value.indexOf("&nbsp;&nbsp;")
 }
-function SelectionCreate()
+function SelectionCreate(...elements)
 {
-    SelectionRemove();
-
-    var selection = DOMSelection();
-    if(selection.Across)
+    const DOMSelection =()=>
     {
-        Selection = selection;
+        var selection;
+        var pathStart, pathStop, pathBetween;
+        var output;
+
+        selection = window.getSelection();
+        output = {
+                Text: selection.toString(),
+                Up: FindStrand(selection.anchorNode, StageDOM),
+                Down: FindStrand(selection.focusNode, StageDOM),
+            Across: false
+        };
+        if(output.Up && output.Down)
+        {
+            output.Across = FindBetween(output.Up[0], output.Down[0]);
+        }
+        return output;
+    }
+
+    const NodeSelection =(inElements)=>
+    {
+        window.getSelection().empty();
+        return {Across:inElements};
+    }
+
+    if(Selection.Across)
+    {
+        for(i=0; i<Selection.Across.length; i++)
+        {
+            Selection.Across[i].removeAttribute("class");
+        }
+    }
+    Selection = elements.length ? NodeSelection(elements) : DOMSelection();
+    if(Selection.Across)
+    {
         for(i=0; i<Selection.Across.length; i++)
         {
             Selection.Across[i].className = "Selection";
@@ -937,8 +953,10 @@ function SelectionCreate()
     }
     return false;
 }
+
 function SelectionRemove()
 {
+    window.getSelection().empty();
     if(Selection.Across)
     {
         for(i=0; i<Selection.Across.length; i++)
@@ -946,21 +964,7 @@ function SelectionRemove()
             Selection.Across[i].removeAttribute("class");
         }
     }
-
-}
-function SelectionCustom(inElements)
-{
-
-}
-function SelectionEmulateUser(inNode)
-{
-    var range, selection;
-    range = document.createRange();
-    range.selectNodeContents(inNode);
-    selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    SelectionCreate();
+    Selection.Across = false;
 }
         </script>
     </body>
