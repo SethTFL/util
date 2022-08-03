@@ -505,16 +505,60 @@ function GeneralElementsCompress()
         return false;
     }
     
+    let fragment = new DocumentFragment();
+    
+    let paragraphs = [[]];
+    let paragraph = paragraphs[0];
+    for(i=0; i<Selection.Across.length; i++)
+    {
+        let current = Selection.Across[i];
+
+        if(current.innerHTML == "&nbsp;")
+        {
+            paragraphs.push([]);
+            paragraph = paragraphs[paragraphs.length-1];
+        }
+        else
+        {
+            paragraph.push(current.innerHTML);
+        }
+        
+    }
+
+    const lineBreak = ` 
+`;
+
+    for(i=0; i<paragraphs.length; i++)
+    {
+        let p = document.createElement("p");
+        p.innerHTML = paragraphs[i].join(`<br/>${lineBreak}`)+`
+`;
+        fragment.append(p);
+        fragment.append(document.createTextNode(lineBreak));
+    }
+    
+    StageDOM.insertBefore(fragment, Selection.Across[0]);
+    for(i=0; i<Selection.Across.length; i++)
+    {
+        let current = Selection.Across[i];
+        StageDOM.removeChild(current);
+    }
+    
+
+    /*
     p = document.createElement("p");
     StageDOM.insertBefore(p, Selection.Across[0]);
     text = [];
     for(i=0; i<Selection.Across.length; i++)
     {
-        text.push(Selection.Across[i].innerHTML);
-        StageDOM.removeChild(Selection.Across[i]);
+        let current = Selection.Across[i];
+        text.push(current.innerHTML == "&nbsp;" ? "</p><p>" : current.innerHTML);
+        StageDOM.removeChild(current);
     }
+
     p.innerHTML = text.join("<br>");
-    SelectionEmulateUser(p);
+    */
+    //SelectionEmulateUser(fragment);
 }
 function GeneralElementsExpand()
 {
@@ -902,6 +946,10 @@ function SelectionRemove()
             Selection.Across[i].removeAttribute("class");
         }
     }
+
+}
+function SelectionCustom(inElements)
+{
 
 }
 function SelectionEmulateUser(inNode)
