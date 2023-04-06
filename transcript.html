@@ -694,6 +694,37 @@ function QuotePullSpread()
 }
 function FootnoteRemove(andPull)
 {
+
+    const reorder =()=>
+    {
+        const footnotes = [...document.querySelectorAll("a[name^='[']")];
+
+        let numericFootnotes = [];
+
+        footnotes.forEach((a, i, arr)=>
+        {
+            let name = a.getAttribute("name");
+            let index = parseInt(name.substring(1));
+            let isNumeric = index > -1;
+
+            if(isNumeric)
+            {
+                let aOther = document.querySelector("a[href='#"+name+"']");
+                numericFootnotes.push({a, aOther, name});
+
+                const renamed = `[${numericFootnotes.length}]`;
+
+                a.setAttribute("name", renamed);
+                a.innerHTML = renamed;
+                
+                aOther.setAttribute("href", `#${renamed}`);
+                aOther.innerHTML = renamed;
+                
+                console.log(`remapped "${name}" to "${renamed}"`);
+            }
+        })
+    }
+
     var i;
     if(!Selection.Across)
     {
@@ -711,6 +742,15 @@ function FootnoteRemove(andPull)
         var name = a.getAttribute("name");
         var otherA = document.querySelector("a[href='#"+name+"']");
         
+        let index = parseInt(name.substring(1));
+        let isNumeric = index > -1;
+
+        if(andPull && isNumeric)
+        {
+            alert("Cannot make a pullquote from a bibliographic footnote");
+            return false;
+        }
+
         if(andPull)
         {
             var text = a.parentNode.innerHTML;
@@ -723,6 +763,11 @@ function FootnoteRemove(andPull)
 
         otherA.parentNode.removeChild(otherA);
         p.parentNode.removeChild(p);
+
+        if(!andPull && isNumeric)
+        {
+            reorder();
+        }
     }
 }
 function FixTitles()
