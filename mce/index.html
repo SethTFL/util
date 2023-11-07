@@ -48,7 +48,12 @@
         );
         document.querySelector("button.Copy").addEventListener("click", function(inEvent)
         {
-            document.querySelector("textarea.Copy").value = document.querySelector("iframe").contentDocument.body.innerHTML;
+           
+            const doc = document.querySelector("iframe").contentDocument.body;
+            const backup = doc.innerHTML;
+            doc.querySelectorAll("a").forEach(a=>a.removeAttribute("mce_href"));
+            document.querySelector("textarea.Copy").value = doc.innerHTML;
+            doc.body.innerHTML = backup;
         });
         </script>
     </body>

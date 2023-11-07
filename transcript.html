@@ -794,17 +794,20 @@ function FixFootnotes()
 {
     function ProcessCopy(inElement)
     {
-        inElement.setAttribute("href", "#"+ (inElement.testContent || inElement.innerText));
-    }
-    function ProcessFooter(inElement)
-    {
-        inElement.setAttribute("name", inElement.testContent || inElement.innerText);
-        inElement.removeAttribute("href");
+        inElement.setAttribute("href", "#"+ (inElement.textContent || inElement.innerText));
     }
     function ProcessFootnote(inElement)
     {
-        inElement.setAttribute("name", inElement.testContent || inElement.innerText);
+        const number = inElement.textContent || inElement.innerText
+        inElement.setAttribute("name", number);
+        inElement.setAttribute("href", "./#"+number);
+        inElement.removeAttribute("mce_href");
+    }
+    function ProcessPullquote(inElement)
+    {
+        inElement.setAttribute("name", inElement.textContent || inElement.innerText);
         inElement.removeAttribute("href");
+        inElement.removeAttribute("mce_href");
         CleanPullquote(inElement.parentNode);
     }
     function CleanPullquote(inParagraph)
@@ -850,9 +853,9 @@ function FixFootnotes()
         return false;
     }
 
-    Iterate("a[href*='#_ftnref']", ProcessFooter);
+    Iterate("a[href*='#_ftnref']", ProcessFootnote);
     Iterate("a[href*='#_ftn']", ProcessCopy)
-    Iterate("a[href*='#_msoanchor']", ProcessFootnote);
+    Iterate("a[href*='#_msoanchor']", ProcessPullquote);
     Iterate("a[href*='#_msocom']", ProcessCopy);
 }
 function FixCruft()
