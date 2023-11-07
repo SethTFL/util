@@ -10,9 +10,9 @@
         </style>
     </head>
     <body>
-        <button class="Copy">Get HTML</button>
-        <textarea class="Copy"></textarea>
+        
         <textarea class=vLargeTextField cols=40 id=id_transcript name=transcript rows=10></textarea>
+        <button class="Copy">Get HTML</button>
         <script type="text/javascript">
         tinyMCE.init(
             {
@@ -48,13 +48,14 @@
         );
         document.querySelector("button.Copy").addEventListener("click", function(inEvent)
         {
-           
             const doc = document.querySelector("iframe").contentDocument.body;
             const backup = doc.innerHTML;
             doc.querySelectorAll("a").forEach(a=>a.removeAttribute("mce_href"));
-            document.querySelector("textarea.Copy").value = doc.innerHTML;
+            navigator.clipboard.writeText(j.content);
+            alert("HTML copied!")
             doc.body.innerHTML = backup;
         });
         </script>
+
     </body>
 </html>
