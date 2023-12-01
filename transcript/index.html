@@ -208,6 +208,8 @@
                     <button onclick="HistoryStore(FixCruft)">Prune</button>
                     |
                     <button onclick="HistoryStore(FixMalformedCenter)">Fix Malformed: Center</button>
+                    |
+                    <button onclick="HistoryStore(FixMarkdown)">Markdown-style ⚠️</button>
                 </span>
             </dd>
             <dd>
@@ -260,6 +262,45 @@ const LocalStoreRead =()=> {
 
 
 <script>
+
+function FixMarkdown()
+{
+
+    const pullquotes = document.querySelectorAll("h6").forEach((h, i)=>{
+        h.setAttribute("id", `pull-${i+1}`);
+    })
+
+    const links = document.querySelectorAll("p>a[href^='./#[']");
+    const newFootnotes = [];
+    for(let i=0; i<links.length; i++)
+    {
+        /** @type {HTMLAnchorElement} */
+        const link = links[i];
+        /** @type {HTMLElement} */
+        const parent = link.parentElement;
+        /** @type {HTMLAnchorElement} */
+        const refLink = document.querySelector(`a[href='#${link.getAttribute("name")}']`);
+
+        refLink.insertAdjacentHTML("afterEnd", `<sup class="footnote-ref"><a href="#fn${i+1}" id="fnref1">${i+1}</a></sup>`);
+        refLink.remove();
+        link.remove();
+        newFootnotes.push(`
+<li id="fn${i+1}" class="footnote-item">
+    <p>${parent.innerHTML} <a href="#fnref${i+1}" class="footnote-backref">↩︎</a></p>
+</li>`);
+
+        if(i==links.length-1)
+        {
+            parent.insertAdjacentHTML("afterend", `<section class="footnotes">
+    <ol class="footnotes-list">
+        ${newFootnotes.join("")}
+    </ol>
+</section>`)
+        }
+        parent.remove();
+    }
+}
+
 var Selection = {};
 //// store function //////////////////////////
 var History = LocalStoreRead();
