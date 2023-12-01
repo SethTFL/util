@@ -160,7 +160,7 @@
             }
         </style>
     </head>
-    <body onload="ToHTML()">
+    <body>
         <dl class="Editor HTML">
             <dd>
                 <span> Switch Editor:</span>
@@ -245,33 +245,36 @@ var FARReplace = document.querySelector(".FAR.Replace");
 
 
 <script>
-
+const LocalStoreWrite =()=> localStorage.setItem("transcript", JSON.stringify(History));
+const LocalStoreRead =()=> JSON.parse(localStorage.getItem("transcript") || []);
 </script>
 
 
 <script>
 var Selection = {};
 //// store function //////////////////////////
-var History = [];
+var History = LocalStoreRead();
 var HistoryActive = false;
 var HistoryArea = document.querySelector("dd .History");
+
 function HistoryStore(inFunc, ...args)
 {
     var i;
     var state;
     state =
     {
-        HTML:"",
-        Func:inFunc,
-        Args:args
+        HTML: "",
+        Func: inFunc.name,
+        Args: args
     };
-    state.Func(...state.Args);
+    inFunc(...args);
     for(i=0; i<StageDOM.childNodes.length; i++)
     {
         state.HTML += (StageDOM.childNodes[i].outerHTML || StageDOM.childNodes[i].nodeValue);
     }
     HistoryActive = History.length;
     History.push(state);
+    LocalStoreWrite();
     HistoryRender();
 }
 function HistoryRecall(inIndex)
@@ -297,6 +300,7 @@ function HistoryPrune(inDeleteBefore)
     {
         History = History.slice(0, HistoryActive+1);
     }
+    LocalStoreWrite();
     HistoryRender();
 }
 function HistoryRender()
@@ -306,7 +310,7 @@ function HistoryRender()
     
     let renderButtonHistory = (inOutput, inIndex) =>
     {
-        return inOutput = inOutput + `<button title="Go to this point" onclick="HistoryRecall(${inIndex})">${History[inIndex].Func.name}</button> `;
+        return inOutput = inOutput + `<button title="Go to this point" onclick="HistoryRecall(${inIndex})">${History[inIndex].Func}</button> `;
     }
     let renderButtonDelete = (inOutput, inBefore) =>
     {
@@ -337,7 +341,7 @@ function HistoryRender()
 
     HistoryArea.innerHTML = `
     <span class="Range Before" >${buttonsBefore} </span>
-    <span class="Range Current"><button title="Active History Point" class="Active">${History[HistoryActive].Func.name}</button></span>
+    <span class="Range Current"><button title="Active History Point" class="Active">${History[HistoryActive].Func}</button></span>
     <span class="Range After"  >${buttonsAfter}  </span>
     `;
 }
@@ -1024,5 +1028,21 @@ function SelectionRemove()
     Selection.Across = false;
 }
         </script>
+
+<script>
+if(History.length)
+{
+    HistoryActive = History.length-1;
+    StageHTML.value = History[HistoryActive].HTML;
+    ToDOM();
+    HistoryRender();
+}
+else
+{
+    ToHTML();
+}
+
+</script>
+
     </body>
 </html>
