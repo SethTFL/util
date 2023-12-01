@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
     <head>
-        <script type="text/javascript" src="tiny_mce.js"></script>
+        
         <style>
             .mceIframeContainer
             {
@@ -13,48 +13,19 @@
         
         <textarea class=vLargeTextField cols=40 id=id_transcript name=transcript rows=10></textarea>
         <button class="Copy">Get HTML</button>
+
+        <script type="text/javascript" src="tiny_mce.js"></script>
         <script type="text/javascript">
-        tinyMCE.init(
+            tinyMCE.init(tinyMCEConfig);
+            document.querySelector("button.Copy").addEventListener("click", function(inEvent)
             {
-                "forced_root_block":"p",
-                "theme_advanced_toolbar_align":"left",
-                "remove_trailing_nbsp":true,
-                "theme_advanced_blockformats":"Paragraph=p,Heading 2=h2,Heading 3=h3,Heading 4=h4,Blockquote=blockquote,Div=div,Code=code,Preformatted=pre,Pull Quote=h6",
-                "spellchecker_languages":"+English=en",
-                "entity_encoding":"numeric",
-                "document_base_url":"",
-                "body_class":"id_transcript=post-wrapper",
-                "theme_advanced_resizing":true,
-                "convert_urls":false,
-                "theme_advanced_statusbar_location":"bottom",
-                "cleanup_on_startup":true,"elements":"id_transcript",
-                "theme_advanced_path":"false",
-                "plugins":"advimage,advlink,fullscreen,paste,media,visualchars",
-                "height":"300",
-                "advimage_update_dimensions_onchange":true,
-                "relative_urls":true,
-                "theme_advanced_toolbar_location":"top",
-                "language":"en",
-                "width":"600",
-                "directionality":"ltr",
-                "theme_advanced_buttons1":"formatselect,bold,italic,underline,bullist,numlist,undo,redo,link,unlink,image,code,visualchars,fullscreen,pasteword,media",
-                "theme_advanced_buttons3":"",
-                "theme_advanced_buttons2":"",
-                "remove_script_host":false,"theme":"advanced",
-                "strict_loading_mode":1,"editor_deselector":"no_tinymce",
-                "extended_valid_elements":"style[*],svg[*],use[*], blockquote[id|class|style|lang],script[type|charset|async|src],iframe[src|width|height|name|align|border|frameBorder|style],section[id|class|style],article[id|class|style],footer[id|class|style],i[id|class|style],div[id|class|style|data-width|data-href],img[class|longdesc|usemap|src|border|alt=|title|hspace|vspace|width|height|align|style]",
-                "mode":"exact"
-            }
-        );
-        document.querySelector("button.Copy").addEventListener("click", function(inEvent)
-        {
-            const doc = document.querySelector("iframe").contentDocument.body;
-            const backup = doc.innerHTML;
-            doc.querySelectorAll("a").forEach(a=>a.removeAttribute("mce_href"));
-            navigator.clipboard.writeText(j.content);
-            alert("HTML copied!")
-            doc.body.innerHTML = backup;
-        });
+                const doc = document.querySelector("iframe").contentDocument.body;
+                const backup = doc.innerHTML;
+                doc.querySelectorAll("a").forEach(a=>a.removeAttribute("mce_href"));
+                navigator.clipboard.writeText(j.content);
+                alert("HTML copied!")
+                doc.body.innerHTML = backup;
+            });
         </script>
 
     </body>
