@@ -1,5 +1,6 @@
 
 const tinyMCEConfig = {
+    "elements":"tiny_mce",
     "forced_root_block":"p",
     "theme_advanced_toolbar_align":"left",
     "remove_trailing_nbsp":true,
@@ -11,7 +12,7 @@ const tinyMCEConfig = {
     "theme_advanced_resizing":true,
     "convert_urls":false,
     "theme_advanced_statusbar_location":"bottom",
-    "cleanup_on_startup":true,"elements":"id_transcript",
+    "cleanup_on_startup":true,
     "theme_advanced_path":"false",
     "plugins":"advimage,advlink,fullscreen,paste,media,visualchars",
     "height":"300",
@@ -24,8 +25,10 @@ const tinyMCEConfig = {
     "theme_advanced_buttons1":"formatselect,bold,italic,underline,bullist,numlist,undo,redo,link,unlink,image,code,visualchars,fullscreen,pasteword,media",
     "theme_advanced_buttons3":"",
     "theme_advanced_buttons2":"",
-    "remove_script_host":false,"theme":"advanced",
-    "strict_loading_mode":1,"editor_deselector":"no_tinymce",
+    "remove_script_host":false,
+    "theme":"advanced",
+    "strict_loading_mode":1,
+    "editor_deselector":"no_tinymce",
     "extended_valid_elements":"style[*],svg[*],use[*], blockquote[id|class|style|lang],script[type|charset|async|src],iframe[src|width|height|name|align|border|frameBorder|style],section[id|class|style],article[id|class|style],footer[id|class|style],i[id|class|style],div[id|class|style|data-width|data-href],img[class|longdesc|usemap|src|border|alt=|title|hspace|vspace|width|height|align|style]",
     "mode":"exact"
 }

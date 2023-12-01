@@ -1,28 +1,19 @@
 <!doctype html>
 <html>
-    <head>
-        
-        <style>
-            .mceIframeContainer
-            {
-                border:1px solid black;
-            }
-        </style>
-    </head>
     <body>
         
-        <textarea class=vLargeTextField cols=40 id=id_transcript name=transcript rows=10></textarea>
-        <button class="Copy">Get HTML</button>
+        <textarea id="tiny_mce"></textarea>
+        <script src="tiny_mce.js"></script>
+        <script>tinyMCE.init(tinyMCEConfig);</script>
 
-        <script type="text/javascript" src="tiny_mce.js"></script>
-        <script type="text/javascript">
-            tinyMCE.init(tinyMCEConfig);
+        <button class="Copy">Get HTML</button>
+        <script>
             document.querySelector("button.Copy").addEventListener("click", function(inEvent)
             {
                 const doc = document.querySelector("iframe").contentDocument.body;
                 const backup = doc.innerHTML;
                 doc.querySelectorAll("a").forEach(a=>a.removeAttribute("mce_href"));
-                navigator.clipboard.writeText(j.content);
+                navigator.clipboard.writeText(doc.innerHTML);
                 alert("HTML copied!")
                 doc.body.innerHTML = backup;
             });
