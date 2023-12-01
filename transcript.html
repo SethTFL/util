@@ -227,6 +227,7 @@
                 <span> Any:</span>
                 <span>
                     <button onclick="HistoryStore(GeneralElementsDestroy)" title="Destroy">💀</button>
+                    <button onclick="HistoryStore(GeneralElementsBibleLink)" title="Bible Link">📖</button>
                 </span>
             </dd>
             <dd>
@@ -585,6 +586,14 @@ function GeneralElementsDestroy()
     }
 
 }
+
+function GeneralElementsBibleLink()
+{
+    const link = `<a href="https://www.truthforlife.org/bible/${Selection.Text.toLowerCase().replaceAll(" ", "+").replaceAll("–", "-").replaceAll(".", "")}">${Selection.Text}</a>`;
+    Selection.Up[0].innerHTML = Selection.Up[0].innerHTML.replace(Selection.Text, link);
+
+}
+
 function QuotePullCreate()
 {
     var quote, string;
