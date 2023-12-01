@@ -252,7 +252,10 @@ var FARReplace = document.querySelector(".FAR.Replace");
 
 <script>
 const LocalStoreWrite =()=> localStorage.setItem("transcript", JSON.stringify(History));
-const LocalStoreRead =()=> JSON.parse(localStorage.getItem("transcript") || []);
+const LocalStoreRead =()=> {
+    const storage = localStorage.getItem("transcript");
+    return storage ? JSON.parse(storage) : [];
+}
 </script>
 
 
