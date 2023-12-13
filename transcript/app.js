@@ -669,6 +669,33 @@ function FixFootnotes()
     Iterate("a[href*='#_ftn']", ProcessCopy)
     Iterate("a[href*='#_msoanchor']", ProcessPullquote);
     Iterate("a[href*='#_msocom']", ProcessCopy);
+
+
+    const fixDjangoDescruction=()=>
+    {
+        // find footnotes with no href
+        const as = StageDOM.querySelectorAll("a[name^='[']").forEach(anchor=>
+        {
+            if(!anchor.href)
+            {
+                // out an href on that is serviceable
+                const index = anchor.getAttribute("name");
+                anchor.setAttribute("href", "./#"+index);
+                anchor.innerHTML = index;
+
+                // take the "[N]" out of the subsequent text if its there
+                const parent = anchor.parentElement;
+                if(parent)
+                {
+                    const splitter = "</a>"
+                    const [link, text] = parent.innerHTML.split(splitter);
+                    const textFixed = text.replace(index, "")
+                    parent.innerHTML = link + splitter + textFixed;
+                }
+            }
+        })
+    }
+    fixDjangoDescruction();
 }
 function FixCruft()
 {
@@ -883,7 +910,7 @@ function FixNVersesOn()
     })
 
     // 1) find all the sermon links
-    PanelDOM.querySelectorAll("p a[href*='truthforlife.org/resources/sermon']").forEach(link=>
+    StageDOM.querySelectorAll("p a[href*='truthforlife.org/resources/sermon']").forEach(link=>
     {
         let parent = /** @type {Element|null} */(link.parentElement);
 
