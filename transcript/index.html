@@ -177,14 +177,16 @@
                     <button onclick="FixCustom()">Becomes ⇝</button>
                     <input type="text" class="FAR Replace"/>
                     &nbsp;
+                    <button onclick="FixDjangoFootnotes()" style="background:orange;">Fix Django Footnotes 👞</button>
                 </span>
             </dd>
             <dd>
+                <span>Plain text editor (for pasting from <strong>Django</strong>)</span><br/>
                 <textarea class="Stage" style="width:80vw; height:60vh; white-space:nowrap;">
                 </textarea>
             </dd>
             <dd>
-                <span>Classic Tiny MCE Editor (paste from Word into here to get HTML for above)</span>
+                <span>Classic Tiny MCE Editor (for pasting from <strong>Word</strong>)</span>
                 <textarea id="tiny_mce"></textarea>
                 <script src="/util/mce/tiny_mce.js"></script>
                 <script>tinyMCE.init(tinyMCEConfig);</script>

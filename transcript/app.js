@@ -11,6 +11,14 @@ const LocalStoreRead =()=> {
     return storage ? JSON.parse(storage) : [];
 }
 
+function FixDjangoFootnotes()
+{
+    ToDOM();
+    FixFootnotes();
+    ToHTML();
+    navigator.clipboard.writeText(StageHTML.value);
+    alert("Fixed and copied to clipboard!");
+}
 
 function FixMarkdown()
 {
@@ -232,7 +240,6 @@ function ToHTML()
     StageHTML.value = text;
     StageHTML.scrollLeft = 0;
     StageHTML.scrollTop = 0;
-    StageHTML.style.height = window.innerHeight - StageHTML.offsetTop - 50;
 }
 function ToDOM()
 {
