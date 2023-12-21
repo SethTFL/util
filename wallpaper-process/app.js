@@ -3,11 +3,11 @@ import {createElement as H} from "https://esm.sh/preact@10.19.3";
 import * as Signal from "https://esm.sh/@preact/signals@1.2.1?deps=preact@10.19.3";
 
 /** @typedef {{file:File, image:HTMLImageElement}} FileImagePair */
-/** @typedef {{directory?:FileSystemDirectoryHandle, files:FileImagePair[]}} FSState */
+/** @typedef {{directory?:FileSystemDirectoryHandle, all:FileImagePair[], matched:FileImagePair[], unmatched:FileImagePair[]}} FSState */
 /** @typedef {[name:string, width:number, height:number]} SizeArg */
 /** @typedef {{name:string, width:number, height:number, files:FileImagePair[]}} Size */
 
-const Files = Signal.signal(/** @type {FSState} */({directory:null, files:[]}));
+const Files = Signal.signal(/** @type {FSState} */({directory:null, all:[], matched:[], unmatched:[]}));
 const Sizes = (/** @type {SizeArg[]} */[
     ["1280x1024", 1280, 1024],
     ["1920x1080", 1920, 1080],
@@ -38,7 +38,12 @@ const Load=async()=>{
     /** @type {FileSystemDirectoryHandle} */
     const handle = await window.showDirectoryPicker();
     /** @type {FileImagePair[]} */
-    const files = [];
+    const all = [];
+    /** @type {FileImagePair[]} */
+    const matched = [];
+    /** @type {FileImagePair[]} */
+    const unmatched = [];
+
     Sizes.forEach(s=>s.value.files = []);
     for await (const file of handle.entries())
     {
@@ -46,7 +51,7 @@ const Load=async()=>{
         const image = await Measure(data);
         /** @type {FileImagePair} */
         const pair = {file, image};
-        files.push(pair);
+        all.push(pair);
         const matches = Sizes.filter((s, i, arr)=>(s.value.width == image.width) && (s.value.height == image.height));
         const [fileName, fileExt] = /** @type {string} */(file[0]).toLowerCase().split(".");
         let bestMatch = matches[0];
@@ -58,16 +63,38 @@ const Load=async()=>{
                 break;
             }
         }
-        bestMatch && (bestMatch.value = {...bestMatch.value, files:[...bestMatch.value.files, pair ]});
+        if(bestMatch)
+        {
+            bestMatch.value = {...bestMatch.value, files:[...bestMatch.value.files, pair ]}
+            matched.push(pair);
+        }
+        else
+        {
+            unmatched.push(pair);
+        }
     }
-    Files.value = {directory:handle, files};
-
+    Files.value = {directory:handle, all, matched, unmatched};
 };
 
 const App=()=>
 {
     return H("div", {class:""}, [
         H("div", {class:"p-4 bg-yellow-500", onclick:Load}, Files.value.directory?.name ? `Folder: "${Files.value.directory.name}"` : "Open Folder"),
+        (Files.value.unmatched.length > 0) && H("div", {}, [
+            H("div", {class:"text(lg center) p-4"}, "Unmatched files:"),
+            H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Files.value.unmatched.map((/**@type {FileImagePair}*/fip)=>
+            {
+                const wide = fip.image.width > fip.image.height;
+
+                return H("div", {class:`rounded-lg text-center bg-slate-200 text-slate-800`},
+                
+                    H("div", {}, [
+                        H("img", {class:`block ${wide?"w-64 h-auto":"w-auto h-64"}`, src:fip.image.src}),
+                        H("div", {class:"inline-block px-1 rounded-full relative -top-8 bg-black text(xs white)"}, fip.file[0])
+                    ])
+                )
+            }))
+        ]),
         H("div", {class:"text(lg center) p-4"}, "Sizes:"),
         H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Sizes.map(({value})=>
         {
