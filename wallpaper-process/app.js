@@ -24,6 +24,8 @@ const Sizes = (/** @type {SizeArg[]} */[
     ["microsoft-surface", 2880, 1920 ],
     ["twitter", 1200, 675 ]
 ]).map(([name, width, height])=>Signal.signal(/**@type {Size} */({name, width, height, files:[]})))
+const Drag = Signal.signal(null);
+
 
 /** @type {(inFile:File)=>Promise<HTMLImageElement>} */
 const Measure =async(inFile)=>new Promise((accept, reject)=>{
@@ -96,18 +98,38 @@ const App=()=>
             }))
         ]),
         H("div", {class:"text(lg center) p-4"}, "Sizes:"),
-        H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Sizes.map(({value})=>
+        H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Sizes.map(signal=>
         {
+            const value = signal.value;
             const wide = value.width > value.height;
             const count = value.files?.length || 0;
             const message = count ? (count == 1 ? "Good!" : "Too Many!") : "Missing!";
+            const highlight = (Drag.value && Drag.value.signal !== signal) && (Drag.value.fip.image.width == value.width && Drag.value.fip.image.height == value.height);
+            console.log(highlight, Drag.value);
 
-            return H("div", {class:`rounded-lg text-center ${count !== 1 ? "bg-red-500 text-white" : "bg-slate-200 text-slate-800"}`},
+            return H("div", {
+                onDragOver:e=>e.preventDefault(),
+                onDrop:e=>{
+                    console.log("dropping", highlight);
+                    if(highlight)
+                    {
+                        signal.value = {...signal.value, files:[...signal.value.files, Drag.value.fip]};
+                        const otherSignal = Drag.value.signal
+                        otherSignal.value = {...otherSignal.value, files:otherSignal.value.files.filter(f=>f!=Drag.value.fip)};
+                    }
+                },
+                class:`rounded-lg ${highlight && "border(2 green-500)"} text-center ${count !== 1 ? "bg-red-500 text-white" : "bg-slate-200 text-slate-800"}`},
             [
                 H("div", {class:"p-2 font-black"}, value.name),
                 H("div", {}, message),
                 H("div", {class:`flex ${wide?"flex-col":"flex-row"}`}, value.files.map((fip)=>{
-                    return H("div", {}, [
+                    return H("div", {key:fip.file[0], draggable:true,
+                        onDragStart:(e)=>{
+                            e.dataTransfer.effectAllowed = "move";
+                            Drag.value = {signal, fip};
+                        },
+                        onDragEnd:()=>{Drag.value = null; console.log("drag done")}
+                        }, [
                         H("img", {class:`block ${wide?"w-64 h-auto":"w-auto h-64"}`, src:fip.image.src}),
                         H("div", {class:"inline-block px-1 rounded-full relative -top-8 bg-black text(xs white)"}, fip.file[0])
                     ]);
