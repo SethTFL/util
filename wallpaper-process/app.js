@@ -7,7 +7,9 @@ import * as Signal from "https://esm.sh/@preact/signals@1.2.1?deps=preact@10.19.
 /** @typedef {[name:string, width:number, height:number]} SizeArg */
 /** @typedef {{name:string, width:number, height:number, files:FileImagePair[]}} Size */
 
-const Files = Signal.signal(/** @type {FSState} */({directory:null, all:[], matched:[], unmatched:[]}));
+/** @type {Signal.Signal<FSState>} */
+const Files = (Signal.signal(({directory:null, all:[], matched:[], unmatched:[]})));
+
 const Sizes = (/** @type {SizeArg[]} */[
     ["1280x1024", 1280, 1024],
     ["1920x1080", 1920, 1080],
@@ -28,7 +30,7 @@ const Drag = Signal.signal(null);
 
 
 /** @type {(inFile:File)=>Promise<HTMLImageElement>} */
-const Measure =async(inFile)=>new Promise((accept, reject)=>{
+const Measure =(inFile)=>new Promise((accept)=>{
     const image = new Image();
     const reader = new FileReader();
     image.addEventListener("load", ()=>accept(image));
@@ -75,7 +77,7 @@ const Load=async()=>{
             unmatched.push(pair);
         }
     }
-    Files.value = {directory:handle, all, matched, unmatched};
+    Files.value = /** @type {FSState} */({directory:handle, all, matched, unmatched});
 };
 
 const App=()=>
@@ -114,7 +116,7 @@ const App=()=>
                     if(highlight)
                     {
                         signal.value = {...signal.value, files:[...signal.value.files, Drag.value.fip]};
-                        const otherSignal = Drag.value.signal
+                        const otherSignal = Drag.value.signal;
                         otherSignal.value = {...otherSignal.value, files:otherSignal.value.files.filter(f=>f!=Drag.value.fip)};
                     }
                 },
