@@ -5,7 +5,7 @@ import * as Signal from "https://esm.sh/@preact/signals@1.2.1?deps=preact@10.19.
 /** @typedef {{file:File, image:HTMLImageElement}} FileImagePair */
 /** @typedef {{directory?:FileSystemDirectoryHandle, all:FileImagePair[], matched:FileImagePair[], unmatched:FileImagePair[]}} FSState */
 /** @typedef {[name:string, width:number, height:number]} SizeArg */
-/** @typedef {{name:string, width:number, height:number, files:FileImagePair[]}} Size */
+/** @typedef {{name:string, width:number, height:number, files:FileImagePair[], uploaded?:boolean}} Size */
 
 const Files = Signal.signal( /** @type {FSState}*/({directory:null, all:[], matched:[], unmatched:[]}) );
 
@@ -27,16 +27,6 @@ const Sizes = (/** @type {SizeArg[]} */[
 ]).map(([name, width, height])=>Signal.signal(/**@type {Size} */({name, width, height, files:[]})))
 const Drag = Signal.signal(null);
 
-
-/** @type {(inFile:File)=>Promise<HTMLImageElement>} */
-const Measure =(inFile)=>new Promise((accept)=>{
-    const image = new Image();
-    const reader = new FileReader();
-    image.addEventListener("load", ()=>accept(image));
-    reader.addEventListener("load", ()=>image.src = reader.result);
-    reader.readAsDataURL(inFile);
-});
-
 const Load=async()=>{
     /** @type {FileSystemDirectoryHandle} */
     const handle = await window.showDirectoryPicker();
@@ -47,33 +37,54 @@ const Load=async()=>{
     /** @type {FileImagePair[]} */
     const unmatched = [];
 
+    /** @type {(inFile:File)=>Promise<HTMLImageElement>} */
+    const Measure =(inFile)=>new Promise((accept)=>{
+        const image = new Image();
+        const reader = new FileReader();
+        image.addEventListener("load", ()=>accept(image));
+        reader.addEventListener("load", ()=>image.src = reader.result);
+        reader.readAsDataURL(inFile);
+    });
+
     Sizes.forEach(s=>s.value.files = []);
     for await (const file of handle.entries())
     {
-        const data = await file[1].getFile(); 
-        const image = await Measure(data);
-        /** @type {FileImagePair} */
-        const pair = {file, image};
-        all.push(pair);
-        const matches = Sizes.filter((s, i, arr)=>(s.value.width == image.width) && (s.value.height == image.height));
         const [fileName, fileExt] = /** @type {string} */(file[0]).toLowerCase().split(".");
-        let bestMatch = matches[0];
-        for(let i=0; i<matches.length; i++)
+        if(fileExt == "jpg" || fileExt == "jpeg")
         {
-            if(fileName.endsWith(matches[i].value.name))
+            if(!HSFilePrefix.value)
             {
-                bestMatch = matches[i];
-                break;
+                const parts = fileName.split("-");
+                if(parts.length > 3)
+                {
+                    HSFilePrefix.value = parts.slice(0, 3).join("-");
+                }                
             }
-        }
-        if(bestMatch)
-        {
-            bestMatch.value = {...bestMatch.value, files:[...bestMatch.value.files, pair ]}
-            matched.push(pair);
-        }
-        else
-        {
-            unmatched.push(pair);
+
+            const data = await file[1].getFile(); 
+            const image = await Measure(data);
+            /** @type {FileImagePair} */
+            const pair = {file, image};
+            all.push(pair);
+            const matches = Sizes.filter((s)=>(s.value.width == image.width) && (s.value.height == image.height));
+            let bestMatch = matches[0];
+            for(let i=0; i<matches.length; i++)
+            {
+                if(fileName.endsWith(matches[i].value.name))
+                {
+                    bestMatch = matches[i];
+                    break;
+                }
+            }
+            if(bestMatch)
+            {
+                bestMatch.value = {...bestMatch.value, files:[...bestMatch.value.files, pair ]}
+                matched.push(pair);
+            }
+            else
+            {
+                unmatched.push(pair);
+            }
         }
     }
     Files.value = /** @type {FSState} */({directory:handle, all, matched, unmatched});
@@ -103,13 +114,15 @@ const App=()=>
         {
             const value = signal.value;
             const wide = value.width > value.height;
-            const count = value.files?.length || 0;
+            const count = value.files.length || 0;
             const message = count ? (count == 1 ? "Good!" : "Too Many!") : "Missing!";
             const highlight = (Drag.value && Drag.value.signal !== signal) && (Drag.value.fip.image.width == value.width && Drag.value.fip.image.height == value.height);
 
+            const rename = `"${HSFilePrefix.value}-${value.name}.jpg"`;
+
             return H("div", {
                 onDragOver:e=>e.preventDefault(),
-                onDrop:e=>{
+                onDrop:_=>{
                     console.log("dropping", highlight);
                     if(highlight)
                     {
@@ -118,10 +131,12 @@ const App=()=>
                         otherSignal.value = {...otherSignal.value, files:otherSignal.value.files.filter(f=>f!=Drag.value.fip)};
                     }
                 },
-                class:`rounded-lg ${highlight && "border(2 green-500)"} text-center ${count !== 1 ? "bg-red-500 text-white" : "bg-slate-200 text-slate-800"}`},
+                class:`rounded-lg ${highlight && "border(2 green-500)"} text-center ${count !== 1 ? "bg-red-500 text-white" : "bg-slate-200 text-slate-800"}`
+            },
             [
                 H("div", {class:"p-2 font-black"}, value.name),
-                H("div", {}, message),
+                value.files[0] && H("span", {class:`text-xs font-black italic`}, ["Uploaded name:", rename]),
+                H("div", {}, value.uploaded ? "✅Uploaded!" : message),
                 H("div", {class:`flex ${wide?"flex-col":"flex-row"}`}, value.files.map((fip)=>{
                     return H("div", {key:fip.file[0], draggable:true,
                         onDragStart:(e)=>{
@@ -142,15 +157,10 @@ const App=()=>
     ])
 };
 
-const StorageKey = "hs-api-key";
-const HSFilePrefix = Signal.signal(Files.value?.directory?.name || "[enter prfix]");
-const HSAPIKey = Signal.signal(localStorage.getItem(StorageKey)||"[enter key]");
+const HSAPIKeyStorageKey = "hs-api-key";
+const HSFilePrefix = Signal.signal("");
+const HSAPIKey = Signal.signal(localStorage.getItem(HSAPIKeyStorageKey)||"");
 const HSProcessing = Signal.signal(false);
-
-Signal.effect(()=>{
-    const name = Files.value?.directory?.name;
-    name && (HSFilePrefix.value = name);
-});
 
 const Upload =async()=>
 {
@@ -192,15 +202,20 @@ const Upload =async()=>
         {
             for await (const size of Sizes)
             {
-                const testFile = await size.value.files[0].file[1].getFile();
-                const form = new FormData();
-                form.append("file", testFile);
-                form.append("folderId", folder.id);
-                form.append("fileName", HSFilePrefix.value+"-"+size.value.name+".jpg");
-                form.append("options", JSON.stringify({access: "PUBLIC_INDEXABLE", overwrite:true}));
-        
-                const resp = await APICall("files", form);
-                console.log(resp);
+                if(size.value.files.length == 1)
+                {
+                    const testFile = await size.value.files[0].file[1].getFile();
+                    const form = new FormData();
+                    form.append("file", testFile);
+                    form.append("folderId", folder.id);
+                    form.append("fileName", HSFilePrefix.value+"-"+size.value.name+".jpg");
+                    form.append("options", JSON.stringify({access: "PUBLIC_INDEXABLE", overwrite:true}));
+
+                    const resp = await APICall("files", form);
+                    console.log(resp);
+
+                    size.value = {...size.value, uploaded:true};                    
+                }
             }
 
         }
@@ -218,15 +233,13 @@ const Uploader =()=>
 {
     
     return H("div", {}, [
-        H("span", {}, "File Prefix:"),
-        H("input", {type:"text", value: HSFilePrefix.value, onInput(e){HSFilePrefix.value = e.target.value}}),
-
-        H("p", { class:"text-slate-500"}, HSFilePrefix.value),
+        H("span", { }, "File Prefix:"),
+        H("input", {class:"p-2 border", type:"text", value: HSFilePrefix.value||"[enter prefix]", onInput(e){HSFilePrefix.value = e.target.value}}),
 
         H("span", {}, "API Key:"),
-        H("input", {type:"text", value: HSAPIKey.value, onChange(/** @type {InputEvent} */e)
+        H("input", {class:"p-2 border", type:"text", value: HSAPIKey.value||"[enter api key]", onChange(/** @type {InputEvent} */e)
         {
-            localStorage.setItem(StorageKey, e.target.value);
+            localStorage.setItem(HSAPIKeyStorageKey, e.target.value);
         }}),
 
         !HSProcessing.value && H("button", {
