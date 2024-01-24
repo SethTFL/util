@@ -7,8 +7,7 @@ import * as Signal from "https://esm.sh/@preact/signals@1.2.1?deps=preact@10.19.
 /** @typedef {[name:string, width:number, height:number]} SizeArg */
 /** @typedef {{name:string, width:number, height:number, files:FileImagePair[]}} Size */
 
-/** @type {Signal.Signal<FSState>} */
-const Files = (Signal.signal(({directory:null, all:[], matched:[], unmatched:[]})));
+const Files = Signal.signal( /** @type {FSState}*/({directory:null, all:[], matched:[], unmatched:[]}) );
 
 const Sizes = (/** @type {SizeArg[]} */[
     ["1280x1024", 1280, 1024],
@@ -107,7 +106,6 @@ const App=()=>
             const count = value.files?.length || 0;
             const message = count ? (count == 1 ? "Good!" : "Too Many!") : "Missing!";
             const highlight = (Drag.value && Drag.value.signal !== signal) && (Drag.value.fip.image.width == value.width && Drag.value.fip.image.height == value.height);
-            console.log(highlight, Drag.value);
 
             return H("div", {
                 onDragOver:e=>e.preventDefault(),
@@ -137,8 +135,105 @@ const App=()=>
                     ]);
                 }))
             ])
-        }))
+        })),
+        Files.value.directory ? H("div", {}, [
+            H(Uploader),
+        ]) : H("p", {}, "select a folder before uploading")
     ])
+};
+
+const StorageKey = "hs-api-key";
+const HSFilePrefix = Signal.signal(Files.value?.directory?.name || "[enter prfix]");
+const HSAPIKey = Signal.signal(localStorage.getItem(StorageKey)||"[enter key]");
+const HSProcessing = Signal.signal(false);
+
+Signal.effect(()=>{
+    const name = Files.value?.directory?.name;
+    name && (HSFilePrefix.value = name);
+});
+
+const Upload =async()=>
+{
+    HSProcessing.value = true;    
+
+    /** @type {(endpoint:string, payload:Record<string, string>)=> Record<string, string>} */
+    async function APICall(endpoint, payload=false)
+    {
+        const params = {
+            method: payload ? "POST" : "GET",
+            headers:{authorization: `Bearer ${HSAPIKey.value}`}
+        };
+        if(payload)
+        {
+            if(!(payload instanceof FormData))
+            {
+                params.headers["content-type"] = "application/json";
+                params.body = JSON.stringify(payload);
+            }
+            else
+            {
+                params.body = payload;
+            }
+        }
+
+        const resp = await fetch(`https://the-proxinator.deno.dev/https://api.hubapi.com/files/v3/${endpoint}`, params);
+        const json = await resp.json();
+        return json;
+    }
+
+    try
+    {
+        const folder = await APICall("folders", {
+            parentFolderId:"2807953303",
+            name:HSFilePrefix.value
+        });
+    
+        if(folder.id)
+        {
+            for await (const size of Sizes)
+            {
+                const testFile = await size.value.files[0].file[1].getFile();
+                const form = new FormData();
+                form.append("file", testFile);
+                form.append("folderId", folder.id);
+                form.append("fileName", HSFilePrefix.value+"-"+size.value.name+".jpg");
+                form.append("options", JSON.stringify({access: "PUBLIC_INDEXABLE", overwrite:true}));
+        
+                const resp = await APICall("files", form);
+                console.log(resp);
+            }
+
+        }
+    }
+    catch(e)
+    {
+        console.log(e);
+    }
+
+
+    HSProcessing.value = false;
+}
+
+const Uploader =()=>
+{
+    
+    return H("div", {}, [
+        H("span", {}, "File Prefix:"),
+        H("input", {type:"text", value: HSFilePrefix.value, onInput(e){HSFilePrefix.value = e.target.value}}),
+
+        H("p", { class:"text-slate-500"}, HSFilePrefix.value),
+
+        H("span", {}, "API Key:"),
+        H("input", {type:"text", value: HSAPIKey.value, onChange(/** @type {InputEvent} */e)
+        {
+            localStorage.setItem(StorageKey, e.target.value);
+        }}),
+
+        !HSProcessing.value && H("button", {
+            class:`p-4 bg-red-500 text-white`,
+            onClick:Upload
+        }, "test call")
+    ]);
 }
 
 Preact.render(H(App), document.querySelector("#app"))
