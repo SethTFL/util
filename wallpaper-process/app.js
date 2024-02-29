@@ -90,73 +90,6 @@ const Load=async()=>{
     Files.value = /** @type {FSState} */({directory:handle, all, matched, unmatched});
 };
 
-const App=()=>
-{
-    return H("div", {class:""}, [
-        H("div", {class:"p-4 bg-yellow-500", onclick:Load}, Files.value.directory?.name ? `Folder: "${Files.value.directory.name}"` : "Open Folder"),
-        (Files.value.unmatched.length > 0) && H("div", {}, [
-            H("div", {class:"text(lg center) p-4"}, "Unmatched files:"),
-            H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Files.value.unmatched.map((/**@type {FileImagePair}*/fip)=>
-            {
-                const wide = fip.image.width > fip.image.height;
-
-                return H("div", {class:`rounded-lg text-center bg-slate-200 text-slate-800`},
-                
-                    H("div", {}, [
-                        H("img", {class:`block ${wide?"w-64 h-auto":"w-auto h-64"}`, src:fip.image.src}),
-                        H("div", {class:"inline-block px-1 rounded-full relative -top-8 bg-black text(xs white)"}, fip.file[0])
-                    ])
-                )
-            }))
-        ]),
-        H("div", {class:"text(lg center) p-4"}, "Sizes:"),
-        H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Sizes.map(signal=>
-        {
-            const value = signal.value;
-            const wide = value.width > value.height;
-            const count = value.files.length || 0;
-            const message = count ? (count == 1 ? "Good!" : "Too Many!") : "Missing!";
-            const highlight = (Drag.value && Drag.value.signal !== signal) && (Drag.value.fip.image.width == value.width && Drag.value.fip.image.height == value.height);
-
-            const rename = `"${HSFilePrefix.value}-${value.name}.jpg"`;
-
-            return H("div", {
-                onDragOver:e=>e.preventDefault(),
-                onDrop:_=>{
-                    console.log("dropping", highlight);
-                    if(highlight)
-                    {
-                        signal.value = {...signal.value, files:[...signal.value.files, Drag.value.fip]};
-                        const otherSignal = Drag.value.signal;
-                        otherSignal.value = {...otherSignal.value, files:otherSignal.value.files.filter(f=>f!=Drag.value.fip)};
-                    }
-                },
-                class:`rounded-lg ${highlight && "border(2 green-500)"} text-center ${count !== 1 ? "bg-red-500 text-white" : "bg-slate-200 text-slate-800"}`
-            },
-            [
-                H("div", {class:"p-2 font-black"}, value.name),
-                value.files[0] && H("span", {class:`text-xs font-black italic`}, ["Uploaded name:", rename]),
-                H("div", {}, value.uploaded ? "✅Uploaded!" : message),
-                H("div", {class:`flex ${wide?"flex-col":"flex-row"}`}, value.files.map((fip)=>{
-                    return H("div", {key:fip.file[0], draggable:true,
-                        onDragStart:(e)=>{
-                            e.dataTransfer.effectAllowed = "move";
-                            Drag.value = {signal, fip};
-                        },
-                        onDragEnd:()=>{Drag.value = null; console.log("drag done")}
-                        }, [
-                        H("img", {class:`block ${wide?"w-64 h-auto":"w-auto h-64"}`, src:fip.image.src}),
-                        H("div", {class:"inline-block px-1 rounded-full relative -top-8 bg-black text(xs white)"}, fip.file[0])
-                    ]);
-                }))
-            ])
-        })),
-        Files.value.directory ? H("div", {}, [
-            H(Uploader),
-        ]) : H("p", {}, "select a folder before uploading")
-    ])
-};
-
 const HSAPIKeyStorageKey = "hs-api-key";
 const HSFilePrefix = Signal.signal("");
 const HSAPIKey = Signal.signal(localStorage.getItem(HSAPIKeyStorageKey)||"");
@@ -231,7 +164,6 @@ const Upload =async()=>
 
 const Uploader =()=>
 {
-    
     return H("div", {}, [
         H("span", { }, "File Prefix:"),
         H("input", {class:"p-2 border", type:"text", value: HSFilePrefix.value||"[enter prefix]", onInput(e){HSFilePrefix.value = e.target.value}}),
@@ -249,4 +181,71 @@ const Uploader =()=>
     ]);
 }
 
-Preact.render(H(App), document.querySelector("#app"))
+const App=()=>
+{
+    return H("div", {class:""}, [
+        H("div", {class:"p-4 bg-yellow-500", onclick:Load}, Files.value.directory?.name ? `Folder: "${Files.value.directory.name}"` : "Open Folder"),
+        (Files.value.unmatched.length > 0) && H("div", {}, [
+            H("div", {class:"text(lg center) p-4"}, "Unmatched files:"),
+            H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Files.value.unmatched.map((/**@type {FileImagePair}*/fip)=>
+            {
+                const wide = fip.image.width > fip.image.height;
+
+                return H("div", {class:`rounded-lg text-center bg-slate-200 text-slate-800`},
+                
+                    H("div", {}, [
+                        H("img", {class:`block ${wide?"w-64 h-auto":"w-auto h-64"}`, src:fip.image.src}),
+                        H("div", {class:"inline-block px-1 rounded-full relative -top-8 bg-black text(xs white)"}, fip.file[0])
+                    ])
+                )
+            }))
+        ]),
+        H("div", {class:"text(lg center) p-4"}, "Sizes:"),
+        H("div", {class:"flex flex-row gap-4 flex-wrap justify-center"}, Sizes.map(signal=>
+        {
+            const value = signal.value;
+            const wide = value.width > value.height;
+            const count = value.files.length || 0;
+            const message = count ? (count == 1 ? "Good!" : "Too Many!") : "Missing!";
+            const highlight = (Drag.value && Drag.value.signal !== signal) && (Drag.value.fip.image.width == value.width && Drag.value.fip.image.height == value.height);
+
+            const rename = `"${HSFilePrefix.value}-${value.name}.jpg"`;
+
+            return H("div", {
+                onDragOver:e=>e.preventDefault(),
+                onDrop:_=>{
+                    console.log("dropping", highlight);
+                    if(highlight)
+                    {
+                        signal.value = {...signal.value, files:[...signal.value.files, Drag.value.fip]};
+                        const otherSignal = Drag.value.signal;
+                        otherSignal.value = {...otherSignal.value, files:otherSignal.value.files.filter(f=>f!=Drag.value.fip)};
+                    }
+                },
+                class:`rounded-lg ${highlight && "border(2 green-500)"} text-center ${count !== 1 ? "bg-red-500 text-white" : "bg-slate-200 text-slate-800"}`
+            },
+            [
+                H("div", {class:"p-2 font-black"}, value.name),
+                value.files[0] && H("span", {class:`text-xs font-black italic`}, ["Uploaded name:", rename]),
+                H("div", {}, value.uploaded ? "✅Uploaded!" : message),
+                H("div", {class:`flex ${wide?"flex-col":"flex-row"}`}, value.files.map((fip)=>{
+                    return H("div", {key:fip.file[0], draggable:true,
+                        onDragStart:(e)=>{
+                            e.dataTransfer.effectAllowed = "move";
+                            Drag.value = {signal, fip};
+                        },
+                        onDragEnd:()=>{Drag.value = null; console.log("drag done")}
+                        }, [
+                        H("img", {class:`block ${wide?"w-64 h-auto":"w-auto h-64"}`, src:fip.image.src}),
+                        H("div", {class:"inline-block px-1 rounded-full relative -top-8 bg-black text(xs white)"}, fip.file[0])
+                    ]);
+                }))
+            ])
+        })),
+        Files.value.directory ? H("div", {}, [
+            H(Uploader),
+        ]) : H("p", {}, "select a folder before uploading")
+    ])
+};
+
+Preact.render(H(App), document.querySelector("#app"));
