@@ -4,7 +4,7 @@
 <html>
     <head>
         <style>
-            input
+            input[type='text']
             {
                 display:block;
                 width:100%;
@@ -24,8 +24,17 @@
             <label>quote</label>
             <input type="text" name="quote" placeholder="quote"/>
             <label>name</label>
-            <input type="text" name="name" placeholder="name"/>
-            <input type="submit"/>
+            <input type="radio" name="name" value="Alistair Begg" id="name-ab"/>
+            <label for="name-ab">Alistair Begg</label>
+            <input type="radio" name="name" value="C.H. Spurgeon" id="name-ch"/>
+            <label for="name-ch">C.H. Spurgeon</label>
+            <input type="radio" name="name" value="" id="name-custom"/>
+            <label for="name-custom">Custom:</label>
+            <input name="custom"/>
+            <input type="checkbox" name="bible" value="false" id="bible"/>
+            <label for="bible">Bible?</label>
+            <br/>
+            <input type="submit" value="update"/>
             <textarea></textarea>
         </form>
 <pre>
@@ -42,7 +51,7 @@
 <p>
 “{-quote-}”
 <br>
-—{-name-}
+{-nameDisplay-}
 </p>
 <p><!--more--></p>
 
@@ -79,29 +88,29 @@
 <script>
 var elements = {
     form:document.getElementsByTagName("form")[0],
-    inputPath:document.getElementsByTagName("input")[0],
-    inputQuote:document.getElementsByTagName("input")[1],
-    inputName:document.getElementsByTagName("input")[2],
     output:document.getElementsByTagName("textarea")[0],
     source:document.getElementsByTagName("pre")[0]
 };
 elements.source.parentNode.removeChild(elements.source);
-var update = function()
+elements.form.addEventListener('submit', function(e)
 {
-    var str;
+    e.preventDefault();
+
+    const path = "https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/"+elements.form.path.value+"/"+elements.form.path.value+"-"
+    let name = elements.form.name.value || elements.form.custom.value
+    let nameDisplay = elements.form.bible.checked ? `<strong>${name}</strong>` : "—"+name;
+
+    let str;
     str = elements.source.innerHTML;
-    str = str.split("{-path-}").join("https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/"+elements.inputPath.value+"/"+elements.inputPath.value+"-");
-    str = str.split("{-quote-}").join(elements.inputQuote.value);
-    str = str.split("{-name-}").join(elements.inputName.value);
+    str = str.split("{-path-}").join(path);
+    str = str.split("{-quote-}").join(elements.form.quote.value);
+    str = str.split("{-name-}").join(name);
+    str = str.split("{-nameDisplay-}").join(nameDisplay);
 
     console.log(str);
 
     elements.output.innerHTML = str;
-};
-elements.form.addEventListener('submit', function(e)
-{
-    e.preventDefault();
-    update();
+
 });
 </script>
     </body>
