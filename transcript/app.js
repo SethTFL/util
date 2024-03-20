@@ -38,7 +38,7 @@ function FixMarkdown()
         /** @type {HTMLAnchorElement} */
         const refLink = document.querySelector(`a[href='#${link.getAttribute("name")}']`);
 
-        refLink.insertAdjacentHTML("afterEnd", `<sup class="footnote-ref"><a href="#fn${i+1}" id="fnref1">${i+1}</a></sup>`);
+        refLink.insertAdjacentHTML("afterEnd", `<sup class="footnote-ref"><a href="#fn${i+1}" id="fnref${i+1}">${i+1}</a></sup>`);
         refLink.remove();
         link.remove();
         newFootnotes.push(`
