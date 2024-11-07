@@ -4,11 +4,42 @@ const StageHTML = document.querySelector(".Editor.HTML .Stage");
 const StageDOM = document.querySelector(".Editor.DOM .Stage");
 const FARFind = document.querySelector(".FAR.Find");
 const FARReplace = document.querySelector(".FAR.Replace");
+const Filename = document.querySelector(".Editor.HTML input.Filename");
 
-const LocalStoreWrite =()=> localStorage.setItem("transcript", JSON.stringify(History));
+const LocalStoreWrite =()=> {
+    localStorage.setItem("filename", Filename.value);
+    localStorage.setItem("transcript", JSON.stringify(History));
+}
 const LocalStoreRead =()=> {
+    Filename.value = localStorage.getItem("filename")||"transcript";
     const storage = localStorage.getItem("transcript");
     return storage ? JSON.parse(storage) : [];
+}
+
+function Download()
+{
+    // Create a Blob object with the data
+    const blob = new Blob([StageHTML.value], { type: 'text/plain' });
+
+    // Create a URL for the Blob
+    const url = URL.createObjectURL(blob);
+
+    // Create an anchor element
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (Filename.value||"transcript")+".html"; // The name of the downloaded file
+
+    // Append the anchor to the body (required for Firefox)
+    document.body.appendChild(a);
+
+    // Trigger a click event on the anchor
+    a.click();
+
+    // Remove the anchor from the document
+    document.body.removeChild(a);
+
+    // Revoke the Blob URL to free up memory
+    URL.revokeObjectURL(url);
 }
 
 function FixDjangoFootnotes()
@@ -708,10 +739,44 @@ function FixCruft()
 {
     var pIntro, pNext, hrs
     
+    let check = StageDOM.firstChild;
+    let advance = true;
+    let id = false;
+    while(advance)
+    {
+        const next = check.nextElementSibling;
+        if(check.nodeName == "P")
+        {
+            const anchorPos = check.innerHTML.indexOf("#");
+            if(!id)
+            {
+                id = check.innerHTML.substring(anchorPos+1);
+                Filename.value = id;
+            }
+
+            if(check.getAttribute("align"))
+            {
+                check.remove();
+            }
+            else
+            {
+                advance = false;
+            }
+        }
+        else
+        {
+            check.remove();
+        }
+        check = next;
+    }
+
+
     pIntro = StageDOM.querySelector("p");
     pNext = pIntro.nextElementSibling;
-    if(pIntro.innerHTML.indexOf("#") != -1 && pIntro.innerHTML.indexOf("<strong") != -1)
+    const anchorPos = pIntro.innerHTML.indexOf("#");
+    if(anchorPos != -1 && pIntro.innerHTML.indexOf("<strong") != -1)
     {
+        Filename.value = pIntro.innerHTML.substring(anchorPos);
         StageDOM.removeChild(pIntro);
     }
     if(pNext.innerHTML == "&nbsp;")
@@ -723,7 +788,7 @@ function FixCruft()
     if(hrs)
     {
         pNext = hrs[0].previousElementSibling;
-        if(pNext.innerHTML == "&nbsp;")
+        if(pNext.innerHTML == "&nbsp;" || pNext.nodeName == "BR")
         {
             StageDOM.removeChild(pNext);
         }

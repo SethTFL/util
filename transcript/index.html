@@ -172,12 +172,16 @@
                 <span> Document:</span>
                 <span>
                     <button onclick="FixNewlines()">Remove Empty Lines</button>
-                    &nbsp;
+                    &nbsp;|&nbsp;
                     <input type="text" class="FAR Find" value="&amp;nbsp;"/>
                     <button onclick="FixCustom()">Becomes ⇝</button>
                     <input type="text" class="FAR Replace"/>
-                    &nbsp;
+                    &nbsp;|&nbsp;
+                    <input type="text" class="Filename" style="text-align:right;" value="transcript"/>.html
+                    <button onclick="Download()">Download</button>
+                    &nbsp;|&nbsp;
                     <button onclick="FixDjangoFootnotes()" style="background:orange;">Fix Django Footnotes 👞</button>
+
                 </span>
             </dd>
             <dd>
@@ -188,7 +192,7 @@
             <dd>
                 <span>Classic Tiny MCE Editor (for pasting from <strong>Word</strong>)</span>
                 <textarea id="tiny_mce"></textarea>
-                <script src="/util/mce/tiny_mce.js"></script>
+                <script src="../mce/tiny_mce.js"></script>
                 <script>tinyMCE.init(tinyMCEConfig);</script>
             </dd>
         </dl>
