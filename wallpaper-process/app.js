@@ -177,7 +177,7 @@ const Uploader =()=>
         !HSProcessing.value && H("button", {
             class:`p-4 bg-red-500 text-white`,
             onClick:Upload
-        }, "test call")
+        }, "Start Upload")
     ]);
 }
 
@@ -226,7 +226,7 @@ const App=()=>
             },
             [
                 H("div", {class:"p-2 font-black"}, value.name),
-                value.files[0] && H("span", {class:`text-xs font-black italic`}, ["Uploaded name:", rename]),
+                value.files[0] && H("span", {class:`text-xs font-black italic`}, ["HubSpot name:", rename]),
                 H("div", {}, value.uploaded ? "✅Uploaded!" : message),
                 H("div", {class:`flex ${wide?"flex-col":"flex-row"}`}, value.files.map((fip)=>{
                     return H("div", {key:fip.file[0], draggable:true,
