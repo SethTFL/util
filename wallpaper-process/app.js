@@ -162,6 +162,82 @@ const Upload =async()=>
     HSProcessing.value = false;
 }
 
+
+const BlogPrompt = Signal.signal("");
+const BlogQuote = Signal.computed(()=>{
+    const original = BlogPrompt.value;
+    const pos1 = original.indexOf("“");
+    const pos2 = original.indexOf("”");
+
+    const text = original.substring(pos1+1, pos2).trim();
+    const name = original.substring(pos2+1).trim();
+    return { text, name, nameDisplay:/\d/.test(name) ? `<strong>${name}</strong>` : `—${name}` };
+});
+
+const BlogHTML = Signal.computed(()=>{
+    const path = "https://cdn2.hubspot.net/hubfs/331596/_Wallpaper/"+HSFilePrefix.value+"/"+HSFilePrefix.value+"-";
+    const {name, text, nameDisplay } = BlogQuote.value; 
+return `
+<p>
+    <img class="img-responsive banner"
+    src="${path}twitter.jpg"
+    alt="${text} - ${name}"
+    title="${text} - ${name}"
+    width="817"
+    caption="false"
+    data-constrained="true"
+    style="width: 817px;">
+</p>
+<p>
+“${text}”
+<br>
+${nameDisplay}
+</p>
+<p><!--more--></p>
+
+<h3>Click below to download your image:</h3>
+<hr>
+<p>
+    <strong style="text-decoration: underline;">Apple Devices:</strong><br>
+    <a target="_blank" href="${path}ipad.jpg">iPads</a><br>
+    <a target="_blank" href="${path}iphone.jpg">iPhones</a><br>
+</p>
+<hr>
+<p>
+    <strong style="text-decoration: underline;">Other Devices:</strong><br>
+    <a target="_blank" href="${path}android.jpg">Android Phones</a><br>
+    <a target="_blank" href="${path}amazon-fire.jpg">Amazon Fire</a><br>
+    <a target="_blank" href="${path}microsoft-surface.jpg">Microsoft Surface</a><br>
+</p>
+<hr>
+<p>
+    <strong style="text-decoration: underline;">Social Media</strong><br>
+    <a target="_blank" href="${path}facebook-banner.jpg">Facebook Banner</a><br>
+    <a target="_blank" href="${path}facebook.jpg">Facebook Post</a><br>
+    <a target="_blank" href="${path}twitter.jpg">Twitter Post</a><br>
+    <a target="_blank" href="${path}instagram.jpg">Instagram Post</a><br>
+</p>
+<hr>
+<p>
+    <strong style="text-decoration: underline;">Desktop Computer</strong><br>
+    <a target="_blank" href="${path}1920x1080.jpg">Large</a><br>
+    <a target="_blank" href="${path}1280x1024.jpg">Small</a><br>
+</p>`;
+})
+
+const Blog =()=>{
+    return H("div", {}, 
+        H("input",
+            {class:"p-2 border w-full", type:"text", onInput(e)
+                {
+                BlogPrompt.value = e.target.value;
+                }
+            }
+        ),
+        H("textarea", {class:"w-full h-[1000px]"}, BlogHTML.value)
+    )
+};
+
 const Uploader =()=>
 {
     return H("div", {}, [
@@ -244,6 +320,7 @@ const App=()=>
         })),
         Files.value.directory ? H("div", {}, [
             H(Uploader),
+            H(Blog),
         ]) : H("p", {}, "select a folder before uploading")
     ])
 };

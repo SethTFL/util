@@ -1,0 +1,15 @@
+{
+  "version": "4",
+  "redirects": {
+    "https://esm.sh/@preact/signals-core@^1.4.0?target=denonext": "https://esm.sh/@preact/signals-core@1.8.0?target=denonext"
+  },
+  "remote": {
+    "https://esm.sh/@preact/signals-core@1.8.0/denonext/signals-core.mjs": "35f8624f983ba148f83c919a15541c7714cabf14b758bcb45ac25708aeb675f5",
+    "https://esm.sh/@preact/signals-core@1.8.0?target=denonext": "4b723b6aeb5294bcd9d3a7399cacd9517f0db1de8883b8651c33021ec43b6db1",
+    "https://esm.sh/@preact/signals@1.2.1/X-ZHByZWFjdEAxMC4xOS4z/denonext/signals.mjs": "75adcdc484ea616381aefc65ea3dc103e53a02246b686788e8ead7bd54976a60",
+    "https://esm.sh/@preact/signals@1.2.1?deps=preact@10.19.3": "a566bf32118bbb14679c1b59f1874e761a8a75db0d8d00d4edb4b1588304a84b",
+    "https://esm.sh/preact@10.19.3": "e665fa7cfbac33461e7ecf79f8b361a8f831b3e7edc8089d1f95e05fed6a8be1",
+    "https://esm.sh/preact@10.19.3/denonext/hooks.mjs": "d2909a69dced9dd62b62efda5ca42e16827cb23322808f59ddfe67d555426277",
+    "https://esm.sh/preact@10.19.3/denonext/preact.mjs": "050906b5fcc2e1703c3f58879378077191dbd58d5d415bcb8dcbc35c4fd0f5d9"
+  }
+}
