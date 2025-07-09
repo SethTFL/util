@@ -644,18 +644,22 @@ function FixFootnotes()
 {
     function ProcessCopy(inElement)
     {
-        inElement.setAttribute("href", "#"+ (inElement.textContent || inElement.innerText));
+        const text = (inElement.textContent || inElement.innerText)
+        inElement.setAttribute("href", "#"+text);
+        inElement.innerHTML = text;
     }
     function ProcessFootnote(inElement)
     {
-        const number = inElement.textContent || inElement.innerText
-        inElement.setAttribute("name", number);
-        inElement.setAttribute("href", "./#"+number);
+        const text = inElement.textContent || inElement.innerText
+        inElement.setAttribute("name", text);
+        inElement.setAttribute("href", "./#"+text);
+        inElement.innerHTML = text;
         inElement.removeAttribute("mce_href");
     }
     function ProcessPullquote(inElement)
     {
-        inElement.setAttribute("name", inElement.textContent || inElement.innerText);
+        const text = inElement.textContent || inElement.innerText;
+        inElement.setAttribute("name", text);
         inElement.removeAttribute("href");
         inElement.removeAttribute("mce_href");
         CleanPullquote(inElement.parentNode);
@@ -1047,4 +1051,11 @@ function FixNVersesOn()
         ${s.sermonText}
     </div>`).join("")
     );
+}
+
+function FixWrappedNumbers()
+{
+    StageDOM.querySelectorAll("a[href^='#[']").forEach(a=>{
+        a.innerHTML = a.textContent;
+    });
 }
