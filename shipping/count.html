@@ -27,7 +27,7 @@
     </style>
 </head>
 <body>
-    <p><small>v 1.0.0</small></p>
+    <p><small>v 1.0.1</small></p>
     <div id="app">
         <div class="section section-input">
             <h2>Setup</h2>
@@ -57,10 +57,10 @@
             <h2>Results</h2>
             <table>
                 <tr>
-                    <th>Code</th><th>Count</th><th></th>
+                    <th>Code</th><th>Order Count</th><th>Donation Count</th><th>Total Count</th><th></th>
                 </tr>
                 <tr v-for="code in codes">
-                    <td>{{code.id}}</td><td>{{code.count}}</td><td><button v-on:click="removeCode(code)">-</button></td>
+                    <td>{{code.id}}</td><td>{{code.countOrder}}</td><td>{{code.countDonate}}</td><td>{{code.count}}</td><td><button v-on:click="removeCode(code)">-</button></td>
                 </tr>
             </table>
         </div>
@@ -97,6 +97,8 @@
                 for(i=0; i<this.codes.length; i++)
                 {
                     this.codes[i].count = 0;
+                    this.codes[i].countOrder = 0;
+                    this.codes[i].countDonate = 0;
                 }
 
                 // re-collect the counts from the store data
@@ -121,6 +123,7 @@
                                     // tally up with the matchng quantity column
                                     cellCount = parseInt(row[ this.csvStore.counts[j] ]);
                                     code.count += cellCount;
+                                    code.countOrder += cellCount;
                                     break;
                                 }
                             }
@@ -142,6 +145,7 @@
                             if(code.id == cellCode)
                             {
                                 code.count++;
+                                code.countDonate++;
                                 break;
                             }
                         }
@@ -168,7 +172,9 @@
                 }
                 this.codes.push({
                     id:this.user.code,
-                    count:0
+                    count:0,
+                    countOrder:0,
+                    countDonate:0
                 });
 
                 this.greatReset();
@@ -199,7 +205,7 @@
                         cell = results.data[0][i];
                         switch(cell.toLowerCase())
                         {
-                            case "product code" :
+                            case "productcode" :
                                 this.csvStore.codes.push(i);
                                 break;
                             case "quantity" :
@@ -228,7 +234,7 @@
                         cell = results.data[0][i];
                         switch(cell.toLowerCase())
                         {
-                            case "product number" :
+                            case "productcode" :
                                 this.csvDonate.code = i;
                                 return;
                         }
