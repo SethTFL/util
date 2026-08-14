@@ -120,7 +120,9 @@ const Upload =async()=>
             }
         }
 
-        const resp = await fetch(`https://the-proxinator.deno.dev/https://api.hubapi.com/files/v3/${endpoint}`, params);
+        const proxy = `https://the-proxinator.treetopflyer.deno.net/`;
+        //const proxy = `http://localhost:8000/`; //`https://the-proxinator.deno.dev/`
+        const resp = await fetch(`${proxy}https://api.hubapi.com/files/v3/${endpoint}`, params);
         const json = await resp.json();
         return json;
     }
